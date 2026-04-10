@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE:-giving}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-postgres} -d ${DATABASE:-giving}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: ${PORT:-3000}
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:5173}
+      PARTNER_KEY: ${PARTNER_KEY:-local-placeholder-partner-key}
+      MERCHANT_ID: ${MERCHANT_ID:-local_placeholder_merchant}
+      TAPPAY_API: ${TAPPAY_API:-https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime}
+      CURRENCY: ${CURRENCY:-TWD}
+      REDIS_URL: redis://redis:6379
+      WORKERS: ${WORKERS:-5}
+      GOOGLE_SECRET: ${GOOGLE_SECRET:-local-google-secret}
+      STATS_PASSWORD: ${STATS_PASSWORD:-local-stats-password}
+      PGUSER: ${PGUSER:-postgres}
+      PASSWORD: ${PASSWORD:-postgres}
+      HOST: postgres
+      PGPORT: 5432
+      DATABASE: ${DATABASE:-giving}
+      GOOGLE_APP_PASSWORD: ${GOOGLE_APP_PASSWORD:-}
+      GOOGLE_SENDER_EMAIL: ${GOOGLE_SENDER_EMAIL:-}
+      GIVING_EMAIL_BANNER_PATH: ${GIVING_EMAIL_BANNER_PATH:-}
+      GIVING_REPORT_URL: ${GIVING_REPORT_URL:-https://thehope.co/25report}
+    ports:
+      - "${PORT:-3000}:3000"
+
+volumes:
+  postgres_data:

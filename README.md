@@ -26,16 +26,17 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 
 ### Email notifications
 - Transport: Gmail SMTP (Workspace account `noreply@thehope.co`) authenticated with a 2FA-protected App Password, so there is no OAuth refresh token to refresh.
-- Template + subject: `emails/givingSuccess.html` is checked into the repo; edit it directly when you get the final copy. Set the email subject by adding a top-of-file comment such as `<!-- subject: 感謝你在 FORWARD 季節中的慷慨參與 -->`.
+- Template + subject: `emails/givingSuccess.html` is checked into the repo; edit it directly when you get the final copy. Set the email subject by adding a top-of-file comment such as `<!-- subject: 感謝你在特會中的慷慨給予 -->`.
 - Template variables: besides `{{banner}}` and `{{greeting}}`, the refreshed layout expects `{{amountDisplay}}`, `{{paymentMethod}}`, and `{{givingDate}}`. The controller now supplies those automatically using the submitted amount/paymentType and the current date formatted as `YYYY/MM/DD`.
-- Banner: point `GIVING_EMAIL_BANNER_PATH` to a local image; it gets attached and referenced in the HTML template through `cid:giving-banner`. If the placeholder `{{banner}}` is omitted, the banner is prepended automatically.
+- Banner: point `GIVING_EMAIL_BANNER_PATH` to a local path or `https://` image URL if you want to inject a banner through `{{banner}}`.
 - Execution point: after TapPay returns `status === 0` and the job is queued, `sendGivingSuccessEmail` fires asynchronously. Missing env vars or recipient email simply skips the send without breaking the payment flow.
+- Annual report CTA: `GIVING_REPORT_URL` controls the "查看 The Hope 年度報告" button and defaults to `https://thehope.co/25report`.
 
 #### Gmail App Password checklist
 1. In the Workspace admin console, make sure IMAP/SMTP is enabled for `noreply@thehope.co`.
 2. Sign in as that mailbox, enable 2-Step Verification, then issue an App Password (choose “Mail” + “Other (Custom name)” to label it for this API).
 3. Store the mailbox and generated password in `.env` as `GOOGLE_SENDER_EMAIL` and `GOOGLE_APP_PASSWORD`.
-4. Point `GIVING_EMAIL_BANNER_PATH` to the banner asset and edit `emails/givingSuccess.html` once the final title/body arrive.
+4. Set `GIVING_EMAIL_BANNER_PATH` if you want a `{{banner}}` image and `GIVING_REPORT_URL` if the CTA should point somewhere else.
 
 ## Prerequisites
 - **Node.js 18+ / npm 9+** – runtime for Express + BullMQ.
@@ -67,7 +68,8 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `DATABASE` | PostgreSQL database containing `confgive`. |
 | `GOOGLE_SENDER_EMAIL` | The actual Workspace mailbox (e.g., `noreply@thehope.co`). |
 | `GOOGLE_APP_PASSWORD` | App Password generated for that mailbox (requires 2FA). |
-| `GIVING_EMAIL_BANNER_PATH` | Optional – absolute/relative path to the banner image the email service should inline. |
+| `GIVING_EMAIL_BANNER_PATH` | Optional – absolute/relative path or `https://` URL for the banner image the email service should inline. |
+| `GIVING_REPORT_URL` | Optional – CTA link used by the giving email. Defaults to `https://thehope.co/25report`. |
 
 Example template:
 ```env
@@ -90,6 +92,7 @@ DATABASE=giving
 GOOGLE_SENDER_EMAIL=noreply@thehope.co
 GOOGLE_APP_PASSWORD=abcd efgh ijkl mnop
 GIVING_EMAIL_BANNER_PATH=./assets/banner.png
+GIVING_REPORT_URL=https://thehope.co/25report
 ```
 
 ## Database schema & migrations
@@ -115,6 +118,36 @@ ALTER TABLE public.confgive
 Rerun `schema.sql` afterwards to catch any other drift and keep the index (`confgive_tp_trade_id_idx`) in place.
 
 ## Local setup & boot
+### One-command local boot with Docker
+If you want the whole stack locally without installing Postgres/Redis on your machine, use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+That starts:
+- `api` on `http://localhost:3000`
+- `postgres` and `redis` inside the Compose network for the API container
+
+Notes:
+- `schema.sql` is mounted into Postgres init, so a fresh DB gets the `confgive` table automatically.
+- Compose injects local-safe placeholder TapPay / auth env vars so the API can boot immediately. Real payments still require valid TapPay credentials.
+- If you need to override secrets or ports, create a `.env`. Container-internal DB/Redis hostnames stay fixed to the Compose services.
+- Postgres and Redis are intentionally not published to host ports, which avoids collisions with services you may already have running locally.
+
+To stop and remove containers:
+
+```bash
+docker compose down
+```
+
+To also remove the Postgres data volume:
+
+```bash
+docker compose down -v
+```
+
+### Manual local boot
 1. Install JS dependencies:
    ```bash
    npm install
@@ -130,6 +163,12 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
    ```
 4. Watch the console for `server listening on port: <PORT>`. BullMQ workers also log job progress/completions.
 5. (Email) Once the API is online, hit the health flow with a test payment that includes `cardholder.email`. The console logs `emailService` messages showing whether the SMTP transport authenticated and if the email was dispatched.
+
+For manual local runs without Docker, if `npm start` fails with `Cannot find module 'uuid'`, refresh dependencies with:
+
+```bash
+npm install
+```
 
 ## Endpoints you can call
 - `POST /payment`

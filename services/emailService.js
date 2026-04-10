@@ -2,13 +2,18 @@ const fs = require("fs");
 const path = require("path");
 const nodemailer = require("nodemailer");
 
-const { GOOGLE_SENDER_EMAIL, GOOGLE_APP_PASSWORD, GIVING_EMAIL_BANNER_PATH } =
-  process.env;
+const {
+  GOOGLE_SENDER_EMAIL,
+  GOOGLE_APP_PASSWORD,
+  GIVING_EMAIL_BANNER_PATH,
+  GIVING_REPORT_URL,
+} = process.env;
 
 const REQUIRED_ENV_VARS = ["GOOGLE_SENDER_EMAIL", "GOOGLE_APP_PASSWORD"];
 
 const DEFAULT_SUBJECT =
   "感謝你的慷慨參與 — 因著你的奉獻，我們一起贏得城市的 1%";
+const DEFAULT_GIVING_REPORT_URL = "https://thehope.co/25report";
 
 const TEMPLATE_PATH = path.join(
   __dirname,
@@ -25,8 +30,20 @@ function areEmailEnvsReady() {
   return REQUIRED_ENV_VARS.every((key) => !!process.env[key]);
 }
 
+function isHttpUrl(value) {
+  return /^https?:\/\//i.test(value || "");
+}
+
 function resolveBannerAttachment() {
   if (!GIVING_EMAIL_BANNER_PATH) return null;
+
+  if (isHttpUrl(GIVING_EMAIL_BANNER_PATH)) {
+    return {
+      filename: path.basename(new URL(GIVING_EMAIL_BANNER_PATH).pathname) || "banner",
+      path: GIVING_EMAIL_BANNER_PATH,
+      cid: bannerCid,
+    };
+  }
 
   const bannerAbsolutePath = path.resolve(GIVING_EMAIL_BANNER_PATH);
   if (!fs.existsSync(bannerAbsolutePath)) {
@@ -62,7 +79,7 @@ function loadTemplate() {
       error.message
     );
     cachedTemplate = {
-      html: "<p>感謝你在這個 FORWARD 季節中的慷慨參與。</p>",
+      html: "<p>感謝你在特會中的慷慨給予</p>",
       subject: DEFAULT_SUBJECT,
     };
     return cachedTemplate;
@@ -94,8 +111,8 @@ function insertBanner(html) {
   }
 
   return {
-    html: `${bannerMarkup}${html}`,
-    attachments: [bannerAttachment],
+    html,
+    attachments: [],
   };
 }
 
@@ -139,7 +156,10 @@ async function sendGivingSuccessEmail({
     ? { html: htmlBody, subject: DEFAULT_SUBJECT }
     : loadTemplate();
 
-  const hydratedHtml = applyTemplate(template.html, templateContext);
+  const hydratedHtml = applyTemplate(template.html, {
+    annualReportUrl: GIVING_REPORT_URL || DEFAULT_GIVING_REPORT_URL,
+    ...templateContext,
+  });
   const { html, attachments } = insertBanner(hydratedHtml);
 
   const mailOptions = {

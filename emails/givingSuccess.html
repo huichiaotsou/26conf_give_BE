@@ -1,4 +1,4 @@
-<!-- subject: 感謝你在 FORWARD 季節中的慷慨參與 -->
+<!-- subject: 感謝你的慷慨參與 — 因著你的奉獻，我們一起贏得城市的 1% -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
@@ -8,69 +8,78 @@
       body {
         margin: 0;
         padding: 0;
-        background: #f6f4ef;
-        font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
-        color: #0f172a;
+        background: #ede6da;
+        font-family: Arial, 'Microsoft JhengHei', sans-serif;
+        color: #000007;
       }
       .email-wrapper {
-        padding: 32px 16px;
+        width: 100%;
+        padding: 40px 16px;
+        box-sizing: border-box;
       }
       .card {
-        max-width: 640px;
+        max-width: 600px;
         margin: 0 auto;
         background: #ffffff;
-        border-radius: 24px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 16px 48px rgba(15, 23, 42, 0.15);
-      }
-      .hero {
-        background: #3c5464;
-        color: #f8fafc;
-        padding: 32px;
-        text-align: center;
-      }
-      .hero h1 {
-        margin: 16px 0 0;
-        font-size: 22px;
-        letter-spacing: 0.8px;
-      }
-      .divider {
-        height: 1px;
-        background: #e2e8f0;
-        margin: 0 32px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
       }
       .content {
-        padding: 32px;
-        line-height: 1.9;
+        padding: 32px 32px 40px;
+        background: #ffffff;
+        line-height: 1.7;
       }
-      .summary-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 20px 24px;
+      .title {
+        margin: 10px 0 24px;
+        font-size: 24px;
+        letter-spacing: 1px;
+        text-align: center;
+        font-weight: 800;
+        color: #e63c23;
+        line-height: 1.4;
+      }
+      .greeting {
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 0;
         margin-bottom: 24px;
       }
-      .summary-title {
-        margin: 0 0 12px;
+      p {
+        margin: 0 0 16px;
         font-size: 16px;
-        color: #0f172a;
-        font-weight: 600;
+      }
+      .summary-card {
+        background: #f8f4ee;
+        border: 2px dashed #e63c23;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 24px 0;
+      }
+      .summary-title {
+        margin: 0 0 16px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #000007;
+        text-align: center;
       }
       .summary-table {
         width: 100%;
         border-collapse: collapse;
+        margin-bottom: 16px;
       }
       .summary-table th,
       .summary-table td {
         padding: 10px 0;
         text-align: left;
         font-size: 15px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid #eadfd0;
+        vertical-align: top;
       }
       .summary-table th {
-        width: 35%;
-        color: #475569;
-        font-weight: 500;
+        width: 34%;
+        color: #6b625c;
+        font-weight: 700;
       }
       .summary-table tr:last-child th,
       .summary-table tr:last-child td {
@@ -78,39 +87,64 @@
       }
       .value {
         font-weight: 600;
-        color: #0f172a;
+        color: #000007;
         display: inline-block;
         min-width: 24px;
       }
       .value:empty::after {
-        content: '—';
-        color: #94a3b8;
+        content: '-';
+        color: #9a948c;
         font-weight: 400;
       }
-      p {
-        margin: 0 0 16px;
+      .cta {
+        display: inline-block;
+        background: #e63c23;
+        color: #ffffff !important;
+        padding: 14px 32px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 700;
+      }
+      .note {
+        font-size: 14px;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        color: #555555;
+        border: 1px solid #eeeeee;
       }
       .footer {
-        background: #3c5464;
-        color: #e2e8f0;
-        padding: 24px 32px;
+        margin-top: 32px;
+        font-size: 14px;
+        color: #666666;
         text-align: center;
+        border-top: 1px solid #eeeeee;
+        padding-top: 24px;
       }
       .footer a {
-        color: #fcd34d;
-        text-decoration: none;
+        color: #e63c23;
+        text-decoration: underline;
       }
       @media (max-width: 480px) {
         .card {
           border-radius: 16px;
         }
-        .hero,
-        .content,
-        .footer {
+        .email-wrapper {
+          padding: 24px 12px;
+        }
+        .content {
           padding: 24px;
         }
-        .divider {
-          margin: 0 24px;
+        .title {
+          font-size: 22px;
+        }
+        .summary-card {
+          padding: 20px;
+        }
+        .cta {
+          display: block;
+          text-align: center;
         }
       }
     </style>
@@ -118,34 +152,26 @@
   <body>
     <div class="email-wrapper">
       <div class="card">
-        <div class="hero">
+        <div style="text-align: center; padding: 0;">
           <img
-            src="https://25fwd.thehope.app/images/Logo.png"
-            alt="FORWARD"
-            title="FORWARD"
+            src="https://thehope.app/TheHopeLogoForEmail.png"
+            alt="The Hope Logo"
             style="
               display: block;
-              margin: 16px auto;
-              max-width: 200px;
               width: 100%;
               height: auto;
-              font-family: 'Gotham Black', 'Arial Black', sans-serif;
-              text-transform: uppercase;
-              letter-spacing: 6px;
-              font-size: 28px;
-              color: #fdf1af;
+              border-radius: 16px 16px 0 0;
             "
+            width="600"
           />
         </div>
-        <div class="divider"></div>
         <div class="content">
-          <p>親愛的 {{greeting}}，你好：</p>
-          <p>感謝你在這個 FORWARD 季節中的慷慨參與。你的擺上不只是財務上的給予，更是向神表達信心與敬拜。</p>
-          <p>年終奉獻收據將於明年一月開立，屆時可於「電子收據下載」頁面取得。</p>
-          <p>因著你的參與 The Hope 得以持續建造神的家，將福音與盼望帶進更多人的生命中，並一起贏得我們所在城市的 1%。</p>
-          <p>期待在 HOPE 主日與你相見！</p>
-          <p>如有任何問題，歡迎來信讓我們知道： <a href="mailto:give@thehope.co"> give@thehope.co </a> </p>
+          <h1 class="title">奉獻成功確認</h1>
 
+          <p class="greeting">Dear {{greeting}},</p>
+          <p>感謝你參與特會，並用實際行動投入神正在做的事。</p>
+          <p>你的奉獻不只是一次金額的付出，更是在信心中一起回應呼召、建造教會、祝福城市。</p>
+          <p>我們已收到你的奉獻資料，以下是本次紀錄：</p>
           <div class="summary-card">
             <p class="summary-title">奉獻明細</p>
             <table class="summary-table" role="presentation">
@@ -162,13 +188,30 @@
                 <td><span class="value">{{givingDate}}</span></td>
               </tr>
             </table>
+            <div style="text-align: center;">
+              <a
+                href="{{annualReportUrl}}"
+                target="_blank"
+                rel="noreferrer"
+                class="cta"
+                >查看 The Hope 年度報告</a
+              >
+            </div>
           </div>
-        </div>
-        <div class="footer">
-          <p style="margin: 0; font-size: 13px; color: #fdf1af;"> <a href="https://24report.thehope.tw">點擊查看 2024 年度報告</a>，你的慷慨正在影響許多人的生命</p>
+
+          <div class="note">
+            <strong>提醒：</strong>
+            若你本次有申請奉獻收據，年終奉獻收據將於明年一月開立，屆時可於「電子收據下載」頁面取得。
+          </div>
+
+          <div class="footer">
+            <p style="margin: 0 0 10px;">
+              如有任何問題，歡迎來信：
+              <a href="mailto:give@thehope.co">give@thehope.co</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </body>
 </html>
-

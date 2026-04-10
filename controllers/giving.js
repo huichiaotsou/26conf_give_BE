@@ -31,9 +31,39 @@ if (
 const { Queue, Worker } = require("bullmq");
 const { v4: uuidv4 } = require("uuid");
 
+function buildRedisConnection(redisUrl) {
+  try {
+    const parsed = new URL(redisUrl);
+    const connection = {
+      host: parsed.hostname,
+      port: Number(parsed.port || 6379),
+      maxRetriesPerRequest: null,
+    };
+
+    if (parsed.username) {
+      connection.username = decodeURIComponent(parsed.username);
+    }
+
+    if (parsed.password) {
+      connection.password = decodeURIComponent(parsed.password);
+    }
+
+    const db = parsed.pathname.replace("/", "");
+    if (db) {
+      connection.db = Number(db);
+    }
+
+    return connection;
+  } catch (error) {
+    throw new Error(`Invalid REDIS_URL: ${redisUrl}`);
+  }
+}
+
+const redisConnection = buildRedisConnection(REDIS_URL);
+
 // Create a queue
 const paymentQueue = new Queue("tappay-payments", {
-  connection: REDIS_URL,
+  connection: redisConnection,
   defaultJobOptions: {
     attempts: 3, // Retry up to 3 times
     backoff: {
@@ -216,7 +246,7 @@ const numberOfWorkers = 5;
 for (let i = 0; i < numberOfWorkers; i++) {
   const worker = new Worker("tappay-payments", paymentWorkerProcessor, {
     // Store the worker instance
-    connection: REDIS_URL,
+    connection: redisConnection,
     concurrency: 1,
   });
 
