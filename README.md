@@ -51,6 +51,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | Variable | Purpose |
 | --- | --- |
 | `PORT` | Port Express listens on (`3000` default when omitted). |
+| `PUBLIC_PATH_PREFIX` | Optional external URL prefix used by reverse proxies. Set to `/api` in production if NGINX exposes this app under `/api/*`; leave empty for local `/stats`. |
 | `SESSION_SECRET` | Secret for `express-session`. |
 | `ALLOWED_ORIGIN` | CORS allow-list (single origin). |
 | `PARTNER_KEY` | TapPay partner key (also sent as `x-api-key`). |
@@ -74,6 +75,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 Example template:
 ```env
 PORT=3000
+PUBLIC_PATH_PREFIX=
 SESSION_SECRET=replace-me
 ALLOWED_ORIGIN=http://localhost:5173
 PARTNER_KEY=pk_test
@@ -181,13 +183,13 @@ npm install
   - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
   - Auth: Requires the same logged-in stats session as `/stats`.
   - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
-- `GET /stats`
+- `GET /stats` (`/api/stats` externally when `PUBLIC_PATH_PREFIX=/api` and NGINX strips `/api`)
   - Auth: If no stats session exists, renders `views/stats-login.ejs` so the user can enter `STATS_PASSWORD`.
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
-- `POST /stats/login`
+- `POST /stats/login` (`/api/stats/login` externally when prefixed)
   - Body: form-encoded `{ password }`.
   - Behavior: Compares the submitted password with `STATS_PASSWORD`, stores `req.session.statsAuthenticated = true`, then redirects to `/stats`.
-- `POST /stats/logout`
+- `POST /stats/logout` (`/api/stats/logout` externally when prefixed)
   - Behavior: Clears the stats session flag and redirects to `/stats`.
 
 ### Siyuan CSV import rules

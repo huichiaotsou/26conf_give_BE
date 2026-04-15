@@ -177,6 +177,10 @@ function requireStatsAuth(req, res, respondWithJson = false) {
   return false;
 }
 
+function statsPath(req) {
+  return `${req.app.locals.publicPathPrefix || ""}/stats`;
+}
+
 function passwordsMatch(candidate, expected) {
   if (!candidate || !expected) {
     return false;
@@ -402,12 +406,12 @@ const givingController = {
         return res.status(500).send("Error signing in");
       }
 
-      res.redirect("/stats");
+      res.redirect(statsPath(req));
     });
   },
   statsLogout: (req, res) => {
     if (!req.session) {
-      return res.redirect("/stats");
+      return res.redirect(statsPath(req));
     }
 
     req.session.statsAuthenticated = false;
@@ -417,7 +421,7 @@ const givingController = {
         return res.status(500).send("Error signing out");
       }
 
-      res.redirect("/stats");
+      res.redirect(statsPath(req));
     });
   },
   uploadSiyuan: async (req, res) => {

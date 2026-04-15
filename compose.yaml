@@ -33,6 +33,7 @@ services:
         condition: service_healthy
     environment:
       PORT: ${PORT:-3000}
+      PUBLIC_PATH_PREFIX: ${PUBLIC_PATH_PREFIX:-}
       SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:5173}
       PARTNER_KEY: ${PARTNER_KEY:-local-placeholder-partner-key}

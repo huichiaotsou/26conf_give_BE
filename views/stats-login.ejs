@@ -36,9 +36,8 @@
         <section class="w-full max-w-md border border-ink/10 bg-[#f8f3ea] p-8 shadow-[0_20px_60px_rgba(0,0,7,0.08)]">
             <p class="mb-3 text-sm font-bold uppercase text-sky">Giving Dashboard</p>
             <h1 class="text-4xl font-black leading-tight text-primary">輸入密碼</h1>
-            <p class="mt-4 text-base leading-7 text-ink/70">使用單一數字密碼進入後台。</p>
 
-            <form class="mt-8 flex flex-col gap-4" action="/stats/login" method="post">
+            <form class="mt-8 flex flex-col gap-4" action="<%= publicPathPrefix %>/stats/login" method="post">
                 <label class="flex flex-col gap-2 text-sm font-bold text-ink" for="password">
                     Password
                     <input id="password" name="password" type="password" inputmode="numeric" pattern="[0-9]*"
