@@ -52,9 +52,8 @@
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-col gap-3 mb-8 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p class="text-sm font-bold uppercase text-accent">Conference Giving</p>
+                        <p class="text-sm font-bold uppercase text-accent">The Hope Conference 2026</p>
                         <p class="text-4xl font-black leading-tight text-primary">Giving Dashboard</p>
-                        <p class="text-ink/70 text-base font-normal leading-normal">An overview of key giving metrics.</p>
                     </div>
                     <form action="/stats/logout" method="post">
                         <button type="submit"
@@ -69,31 +68,12 @@
                     <div
                         class="flex flex-col gap-3 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                         <p class="text-ink/70 text-base font-bold leading-normal">Total Giving</p>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-accent font-bold">2024</p>
-                                <p class="text-3xl font-bold leading-tight" id="total-giving-2024">$0</p>
-                            </div>
-                            <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-accent font-bold">2025</p>
-                                <p class="text-3xl font-bold leading-tight" id="total-giving-2025">$0</p>
-                            </div>
-                        </div>
+                        <p class="text-4xl font-black leading-tight" id="total-giving-current">$0</p>
                     </div>
                     <div
                         class="flex flex-col gap-3 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                        <p class="text-ink/70 text-base font-bold leading-normal">Total Giving Counts
-                        </p>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-accent font-bold">2024</p>
-                                <p class="text-3xl font-bold leading-tight" id="total-count-2024">0</p>
-                            </div>
-                            <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-accent font-bold">2025</p>
-                                <p class="text-3xl font-bold leading-tight" id="total-count-2025">0</p>
-                            </div>
-                        </div>
+                        <p class="text-ink/70 text-base font-bold leading-normal">Total Giving Counts</p>
+                        <p class="text-4xl font-black leading-tight" id="total-count-current">0</p>
                     </div>
                 </div>
 
@@ -115,13 +95,45 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 gap-8 mt-8">
+                    <div
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">Past 7 Days</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Daily giving sums (Taipei time, today included)</p>
+                        <div class="h-72 w-full">
+                            <canvas id="pastSevenDaysChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-8 mt-8">
+                    <div
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">Payment Method Stats</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Apple Pay, Google Pay, and credit card.</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <p class="mb-3 text-sm font-bold text-ink/70">Count Ratio</p>
+                                <div class="h-72">
+                                    <canvas id="paymentMethodCountChart"></canvas>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="mb-3 text-sm font-bold text-ink/70">Amount Ratio</p>
+                                <div class="h-72">
+                                    <canvas id="paymentMethodAmountChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Weekly Trend -->
-                <div class="grid grid-cols-1 gap-8">
+                <div class="grid grid-cols-1 gap-8 mt-8">
                     <div
                         class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                         <p class="text-lg font-black text-primary mb-1">Weekly Giving Trend</p>
-                        <p class="text-ink/60 text-sm font-normal mb-1">2024 Week 1: 11/10</p>
-                        <p class="text-ink/60 text-sm font-normal mb-4">2025 Week 1: 11/15</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Conference weeks.</p>
                         <div class="h-80 w-full">
                             <canvas id="weeklyTrendChart"></canvas>
                         </div>
@@ -135,10 +147,8 @@
                                 class="bg-[#ede6da] text-xs text-ink/65 uppercase">
                                 <tr>
                                     <th class="px-6 py-3" scope="col">Week Period</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Amount 2024</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Amount 2025</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Count 2024</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Count 2025</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Amount</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Count</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm text-ink/80" id="period-table-body">
@@ -147,54 +157,8 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 gap-8 mt-8">
-                    <div
-                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                        <p class="text-lg font-black text-primary mb-1">Past 7 Days (2025)</p>
-                        <p class="text-ink/60 text-sm font-normal mb-4">Daily giving sums (Taipei time, today included)</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="recent-daily-cards">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-8 mt-8">
-                    <div
-                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                        <p class="text-lg font-black text-primary mb-1">2025 Payment Method Stats</p>
-                        <p class="text-ink/60 text-sm font-normal mb-4">思遠 vs TapPay</p>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="h-72">
-                                <canvas id="uploadMixChart"></canvas>
-                            </div>
-                            <div class="h-72">
-                                <canvas id="paymentMethodWeeklyChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
-    </div>
-
-    <div class="p-6 bg-[#f8f3ea] border-t border-ink/10">
-        <div class="max-w-7xl mx-auto flex flex-col gap-3">
-            <div class="flex flex-col md:flex-row gap-3 md:items-center">
-                <label class="w-full md:w-72 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-ink/25 bg-white text-sm cursor-pointer hover:border-primary transition">
-                    <span class="material-symbols-outlined text-primary">upload_file</span>
-                    <span class="flex-1 truncate">Upload giving data (CSV)</span>
-                    <input id="siyuan-file" type="file" accept=".csv,text/csv" class="hidden" />
-                </label>
-                <button id="upload-siyuan-btn"
-                    class="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition">
-                    Upload giving data
-                </button>
-            </div>
-            <p id="upload-feedback" class="text-sm text-ink/60">
-                Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped and any previous Siyuan uploads are replaced.
-            </p>
-        </div>
     </div>
 
     <script id="server-data" type="application/json">
@@ -236,59 +200,27 @@
             return Date.UTC(year, month - 1, day);
         };
 
-        const getYearBucket = (dateStr) => {
+        const DASHBOARD_YEAR = 2026;
+
+        const getDateYear = (dateStr) => {
             if (!dateStr) return null;
             const dateOnly = String(dateStr).slice(0, 10);
-            const [year, month, day] = dateOnly.split('-').map(Number);
-            if ([year, month, day].some(v => Number.isNaN(v))) return null;
-            if (year === 2025 && month === 1) return 2024; // Jan 2025 counts toward 2024 season
-            if (year === 2025 && month === 2 && day === 1) return 2024; // Feb 1, 2025 stays with 2024 season
-            if (year === 2026 && month === 1) return 2025; // Jan 2026 counts toward 2025 season
-            return year;
+            const [year] = dateOnly.split('-').map(Number);
+            return Number.isNaN(year) ? null : year;
         };
 
-        const periodDefinitions = {
-            2024: [
-                { start: '2024-10-01', end: '2024-11-16', range: '10/01-11/16' },
-                { start: '2024-11-17', end: '2024-11-23', range: '11/17-11/23' },
-                { start: '2024-11-24', end: '2024-11-30', range: '11/24-11/30' },
-                { start: '2024-12-01', end: '2024-12-07', range: '12/01-12/07' },
-                { start: '2024-12-08', end: '2024-12-14', range: '12/08-12/14' },
-                { start: '2024-12-15', end: '2024-12-21', range: '12/15-12/21' },
-                { start: '2024-12-22', end: '2024-12-28', range: '12/22-12/28' },
-                { start: '2024-12-29', end: '2025-01-04', range: '12/29-01/04' },
-                { start: '2025-01-05', end: '2025-01-11', range: '01/05-01/11' },
-                { start: '2025-01-12', end: '2025-01-18', range: '01/12-01/18' },
-                { start: '2025-01-19', end: '2025-01-25', range: '01/19-01/25' },
-                { start: '2025-01-26', end: '2025-02-01', range: '01/26-02/01' },
-            ],
-            2025: [
-                { start: '2025-10-01', end: '2025-11-21', range: '10/01-11/21' },
-                { start: '2025-11-22', end: '2025-11-28', range: '11/22-11/28' },
-                { start: '2025-11-29', end: '2025-12-05', range: '11/29-12/05' },
-                { start: '2025-12-06', end: '2025-12-12', range: '12/06-12/12' },
-                { start: '2025-12-13', end: '2025-12-19', range: '12/13-12/19' },
-                { start: '2025-12-20', end: '2025-12-26', range: '12/20-12/26' },
-                { start: '2025-12-27', end: '2026-01-02', range: '12/27-01/02' },
-                { start: '2026-01-03', end: '2026-01-09', range: '01/03-01/09' },
-                { start: '2026-01-10', end: '2026-01-16', range: '01/10-01/16' },
-                { start: '2026-01-17', end: '2026-01-23', range: '01/17-01/23' },
-                { start: '2026-01-24', end: '2026-01-31', range: '01/24-01/31' },
-            ],
-        };
-
-        const maxWeeks = Math.max(
-            periodDefinitions[2024].length,
-            periodDefinitions[2025].length
-        );
-
+        const periodDefinitions = [
+            { start: `${DASHBOARD_YEAR}-04-20`, end: `${DASHBOARD_YEAR}-04-26`, range: '4/20-4/26' },
+            { start: `${DASHBOARD_YEAR}-04-27`, end: `${DASHBOARD_YEAR}-05-03`, range: '4/27-5/3' },
+            { start: `${DASHBOARD_YEAR}-05-04`, end: `${DASHBOARD_YEAR}-05-10`, range: '5/4-5/10' },
+            { start: `${DASHBOARD_YEAR}-05-11`, end: `${DASHBOARD_YEAR}-05-17`, range: '5/11-5/17' },
+        ];
+        const maxWeeks = periodDefinitions.length;
         const weekLabels = Array.from({ length: maxWeeks }, (_, idx) => `Week ${idx + 1}`);
-        const chartWeekLabels = weekLabels.map((label, idx) => idx === 0 ? 'Week 1 & Before' : label);
+        const chartWeekLabels = weekLabels;
 
-        const findWeekIndex = (year, dateOnly) => {
-            const defs = periodDefinitions[year];
-            if (!defs) return -1;
-            return defs.findIndex(({ start, end }) => dateOnly >= start && dateOnly <= end);
+        const findWeekIndex = (dateOnly) => {
+            return periodDefinitions.findIndex(({ start, end }) => dateOnly >= start && dateOnly <= end);
         };
 
         const todayTaipeiMs = getTaipeiMidnightMs(new Date());
@@ -304,114 +236,59 @@
             return acc;
         }, {});
 
-        // Helper to determine period
-        const getPeriod = (dateStr) => {
-            // dateStr is likely YYYY-MM-DD or ISO string. 
-            // Assuming dateStr is sortable string YYYY-MM-DD
-            // Or construct Date object.
-            const d = new Date(dateStr);
-            const date = d.toISOString().split('T')[0]; // YYYY-MM-DD in UTC... wait, local time matters?
-            // The DB stores date as DATE or TIMESTAMPTZ?
-            // Schema says "date" DATE NOT NULL.
-            // So it should be YYYY-MM-DD.
-
-            // Periods:
-            // before 11/23
-            // 11/24 ~ 11/30
-            // 12/01 ~ 12/07
-            // 12/08 ~ 12/14
-            // 12/15 ~ 12/21
-            // 12/22 ~ 12/28
-            // 12/29 ~ 01/04
-
-            // Let's use string comparison for YYYY-MM-DD since it works lexicographically.
-            // 2025-11-23
-
-            if (date < '2025-11-24') return 'Before 11/23';
-            if (date <= '2025-11-30') return '11/24 ~ 11/30';
-            if (date <= '2025-12-07') return '12/01 ~ 12/07';
-            if (date <= '2025-12-14') return '12/08 ~ 12/14';
-            if (date <= '2025-12-21') return '12/15 ~ 12/21';
-            if (date <= '2025-12-28') return '12/22 ~ 12/28';
-            if (date <= '2026-01-04') return '12/29 ~ 01/04'; // Assuming 2026 for Jan
-            return 'After 01/04';
-        };
-
         // Process Data
-        let totalGiving2024 = 0;
-        let totalGiving2025 = 0;
-        let totalCount2024 = 0;
-        let totalCount2025 = 0;
+        let totalGiving = 0;
+        let totalCount = 0;
         const campusOrder = ['台北分部', '台中分部', '線上分部', '其他'];
         const buildCampusBucket = () => campusOrder.reduce((acc, campus) => {
             acc[campus] = 0;
             return acc;
         }, {});
-        const campusSum2024 = buildCampusBucket();
-        const campusSum2025 = buildCampusBucket();
-        const campusCount2024 = buildCampusBucket();
-        const campusCount2025 = buildCampusBucket();
-        let siyuanCsv2025Count = 0;
-        let nativeUpload2025Count = 0;
+        const campusSum = buildCampusBucket();
+        const campusCount = buildCampusBucket();
+        const paymentMethodOrder = ['Apple Pay', 'Google Pay', '信用卡'];
+        const buildPaymentMethodBucket = () => paymentMethodOrder.reduce((acc, method) => {
+            acc[method] = 0;
+            return acc;
+        }, {});
+        const paymentMethodCount = buildPaymentMethodBucket();
+        const paymentMethodAmount = buildPaymentMethodBucket();
         const makeWeekArray = () => Array.from({ length: maxWeeks }, () => 0);
-        const weeklySum = {
-            2024: makeWeekArray(),
-            2025: makeWeekArray(),
+        const weeklySum = makeWeekArray();
+        const weeklyCount = makeWeekArray();
+
+        const normalizePaymentMethod = (rawPaymentType) => {
+            const normalized = String(rawPaymentType || '').toLowerCase().trim();
+            if (normalized === 'apple_pay') return 'Apple Pay';
+            if (normalized === 'google_pay') return 'Google Pay';
+            return '信用卡';
         };
-        const weeklyCount = {
-            2024: makeWeekArray(),
-            2025: makeWeekArray(),
-        };
-        const weeklySiyuanCount2025 = makeWeekArray();
-        const weeklyNativeCount2025 = makeWeekArray();
 
         rawData.forEach(item => {
             const amount = Number(item.amount) || 0;
-            const year = getYearBucket(item.date);
+            const year = getDateYear(item.date);
             const dateOnly = String(item.date).slice(0, 10);
-            if (year === 2024) {
-                totalGiving2024 += amount;
-                totalCount2024 += 1;
-            } else if (year === 2025) {
-                totalGiving2025 += amount;
-                totalCount2025 += 1;
-                const tradeId = (item.tp_trade_id || '').toString().toLowerCase();
-                const isSiyuanUpload = item.upload === 'siyuan_csv';
-                const isNativeTappay = !isSiyuanUpload && !tradeId.includes('siyuan');
-                if (isSiyuanUpload) {
-                    siyuanCsv2025Count += 1;
-                } else if (isNativeTappay) {
-                    nativeUpload2025Count += 1;
-                }
-            }
+            if (year !== DASHBOARD_YEAR) return;
+
+            const weekIndex = findWeekIndex(dateOnly);
+            if (weekIndex < 0) return;
+
+            totalGiving += amount;
+            totalCount += 1;
+
+            const paymentMethod = normalizePaymentMethod(item.paymenttype || item.paymentType);
+            paymentMethodCount[paymentMethod] += 1;
+            paymentMethodAmount[paymentMethod] += amount;
 
             // Campus
             const campusValue = (item.campus || '').trim();
             const campus = campusOrder.includes(campusValue) ? campusValue : '其他';
-            if (year === 2024) {
-                campusSum2024[campus] = (campusSum2024[campus] || 0) + amount;
-                campusCount2024[campus] = (campusCount2024[campus] || 0) + 1;
-            } else if (year === 2025) {
-                campusSum2025[campus] = (campusSum2025[campus] || 0) + amount;
-                campusCount2025[campus] = (campusCount2025[campus] || 0) + 1;
-            }
+            campusSum[campus] = (campusSum[campus] || 0) + amount;
+            campusCount[campus] = (campusCount[campus] || 0) + 1;
 
             // Weekly period buckets
-            const weekIndex = findWeekIndex(year, dateOnly);
-            if (weekIndex >= 0) {
-                weeklySum[year][weekIndex] += amount;
-                weeklyCount[year][weekIndex] += 1;
-                if (year === 2025) {
-                    const tradeId = (item.tp_trade_id || '').toString().toLowerCase();
-                    const isSiyuanUpload = item.upload === 'siyuan_csv';
-                    const isNativeTappay = !isSiyuanUpload && !tradeId.includes('siyuan');
-                    if (isSiyuanUpload) {
-                        weeklySiyuanCount2025[weekIndex] += 1;
-                    } else if (isNativeTappay) {
-                        weeklyNativeCount2025[weekIndex] += 1;
-                    }
-                }
-            }
+            weeklySum[weekIndex] += amount;
+            weeklyCount[weekIndex] += 1;
 
             // Past 7 days (Taipei)
             const donationDateMs = parseDbDateToUTC(item.date);
@@ -425,10 +302,8 @@
         });
 
         // Update DOM
-        document.getElementById('total-giving-2024').textContent = formatCurrency(totalGiving2024);
-        document.getElementById('total-giving-2025').textContent = formatCurrency(totalGiving2025);
-        document.getElementById('total-count-2024').textContent = totalCount2024.toLocaleString();
-        document.getElementById('total-count-2025').textContent = totalCount2025.toLocaleString();
+        document.getElementById('total-giving-current').textContent = formatCurrency(totalGiving);
+        document.getElementById('total-count-current').textContent = totalCount.toLocaleString();
 
         // Charts Configuration
         Chart.defaults.color = '#000007';
@@ -439,10 +314,8 @@
 
         // Campus Charts
         const campusLabels = campusOrder;
-        const campusSum2024Data = campusLabels.map(l => campusSum2024[l] || 0);
-        const campusSum2025Data = campusLabels.map(l => campusSum2025[l] || 0);
-        const campusCount2024Data = campusLabels.map(l => campusCount2024[l] || 0);
-        const campusCount2025Data = campusLabels.map(l => campusCount2025[l] || 0);
+        const campusSumData = campusLabels.map(l => campusSum[l] || 0);
+        const campusCountData = campusLabels.map(l => campusCount[l] || 0);
 
         new Chart(document.getElementById('campusSumChart'), {
             type: 'bar',
@@ -450,14 +323,8 @@
                 labels: campusLabels,
                 datasets: [
                     {
-                        label: '2024',
-                        data: campusSum2024Data,
-                        backgroundColor: '#0689c6',
-                        borderRadius: 4
-                    },
-                    {
-                        label: '2025',
-                        data: campusSum2025Data,
+                        label: 'Total',
+                        data: campusSumData,
                         backgroundColor: '#e63c23',
                         borderRadius: 4
                     }
@@ -468,7 +335,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true },
+                    legend: { display: false },
                     datalabels: { display: false }
                 }
             }
@@ -480,14 +347,8 @@
                 labels: campusLabels,
                 datasets: [
                     {
-                        label: '2024',
-                        data: campusCount2024Data,
-                        backgroundColor: '#0689c6',
-                        borderRadius: 4
-                    },
-                    {
-                        label: '2025',
-                        data: campusCount2025Data,
+                        label: 'Count',
+                        data: campusCountData,
                         backgroundColor: '#e63c23',
                         borderRadius: 4
                     }
@@ -498,7 +359,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true },
+                    legend: { display: false },
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
@@ -509,18 +370,19 @@
             }
         });
 
-        // Siyuan vs Native Upload Mix (2025)
-        const uploadMixChartEl = document.getElementById('uploadMixChart');
-        if (uploadMixChartEl) {
-            const uploadMixData = [siyuanCsv2025Count, nativeUpload2025Count];
-            new Chart(uploadMixChartEl, {
-                type: 'doughnut',
+        const paymentMethodColors = ['#e63c23', '#0689c6', '#000007'];
+
+        const paymentMethodCountChartEl = document.getElementById('paymentMethodCountChart');
+        if (paymentMethodCountChartEl) {
+            const paymentMethodCountData = paymentMethodOrder.map(method => paymentMethodCount[method] || 0);
+            new Chart(paymentMethodCountChartEl, {
+                type: 'pie',
                 data: {
-                    labels: ['思遠', 'TapPay'],
+                    labels: paymentMethodOrder,
                     datasets: [
                         {
-                            data: uploadMixData,
-                            backgroundColor: ['#e63c23', '#0689c6'],
+                            data: paymentMethodCountData,
+                            backgroundColor: paymentMethodColors,
                             borderWidth: 0
                         }
                     ]
@@ -534,7 +396,7 @@
                             callbacks: {
                                 label: (context) => {
                                     const value = context.parsed;
-                                    const total = uploadMixData.reduce((acc, v) => acc + v, 0) || 1;
+                                    const total = paymentMethodCountData.reduce((acc, v) => acc + v, 0) || 1;
                                     const pct = ((value / total) * 100).toFixed(1);
                                     return `${context.label}: ${value.toLocaleString()} (${pct}%)`;
                                 }
@@ -545,46 +407,33 @@
             });
         }
 
-        const paymentMethodWeeklyChartEl = document.getElementById('paymentMethodWeeklyChart');
-        if (paymentMethodWeeklyChartEl) {
-            new Chart(paymentMethodWeeklyChartEl, {
-                type: 'bar',
+        const paymentMethodAmountChartEl = document.getElementById('paymentMethodAmountChart');
+        if (paymentMethodAmountChartEl) {
+            const paymentMethodAmountData = paymentMethodOrder.map(method => paymentMethodAmount[method] || 0);
+            new Chart(paymentMethodAmountChartEl, {
+                type: 'pie',
                 data: {
-                    labels: chartWeekLabels,
+                    labels: paymentMethodOrder,
                     datasets: [
                         {
-                            label: '思遠',
-                            data: weeklySiyuanCount2025,
-                            backgroundColor: '#e63c23',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'TapPay',
-                            data: weeklyNativeCount2025,
-                            backgroundColor: '#0689c6',
-                            borderRadius: 4
+                            data: paymentMethodAmountData,
+                            backgroundColor: paymentMethodColors,
+                            borderWidth: 0
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: false },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            title: { display: true, text: 'Count' }
-                        }
-                    },
                     plugins: {
-                        legend: { display: true },
-                        datalabels: { display: false },
+                        legend: { position: 'bottom' },
                         tooltip: {
                             callbacks: {
                                 label: (context) => {
-                                    const value = context.parsed.y;
-                                    return `${context.dataset.label}: ${value?.toLocaleString?.() || 0}`;
+                                    const value = context.parsed;
+                                    const total = paymentMethodAmountData.reduce((acc, v) => acc + v, 0) || 1;
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${formatCurrency(value)} (${pct}%)`;
                                 }
                             }
                         }
@@ -594,12 +443,9 @@
         }
 
         // Weekly Trend Chart
-        const periodSumData2024 = weeklySum[2024];
-        const periodSumData2025 = weeklySum[2025];
-        const periodCountData2024 = weeklyCount[2024];
-        const periodCountData2025 = weeklyCount[2025];
-        const periodRanges2024 = Array.from({ length: maxWeeks }, (_, idx) => periodDefinitions[2024][idx]?.range || '-');
-        const periodRanges2025 = Array.from({ length: maxWeeks }, (_, idx) => periodDefinitions[2025][idx]?.range || '-');
+        const periodSumData = weeklySum;
+        const periodCountData = weeklyCount;
+        const periodRanges = Array.from({ length: maxWeeks }, (_, idx) => periodDefinitions[idx]?.range || '-');
 
         new Chart(document.getElementById('weeklyTrendChart'), {
             type: 'line',
@@ -607,48 +453,21 @@
                 labels: chartWeekLabels,
                 datasets: [
                     {
-                        label: 'Amount 2024',
-                        data: periodSumData2024,
-                        borderColor: '#0689c6',
+                        label: 'Amount',
+                        data: periodSumData,
+                        borderColor: '#e63c23',
                         backgroundColor: 'transparent',
-                        ranges: periodRanges2024,
+                        ranges: periodRanges,
                         fill: false,
                         yAxisID: 'y',
                         tension: 0.4,
                         datalabels: { display: false }
                     },
                     {
-                        label: 'Count 2024',
-                        data: periodCountData2024,
+                        label: 'Count',
+                        data: periodCountData,
                         borderColor: '#0689c6',
-                        ranges: periodRanges2024,
-                        backgroundColor: 'transparent',
-                        yAxisID: 'y1',
-                        tension: 0.4,
-                        borderDash: [5, 5],
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'bottom',
-                            color: '#000007',
-                            formatter: (value) => value.toLocaleString()
-                        }
-                    },
-                    {
-                        label: 'Amount 2025',
-                        data: periodSumData2025,
-                        borderColor: '#e63c23',
-                        backgroundColor: 'transparent',
-                        ranges: periodRanges2025,
-                        fill: false,
-                        yAxisID: 'y',
-                        tension: 0.4,
-                        datalabels: { display: false }
-                    },
-                    {
-                        label: 'Count 2025',
-                        data: periodCountData2025,
-                        borderColor: '#e63c23',
-                        ranges: periodRanges2025,
+                        ranges: periodRanges,
                         backgroundColor: 'transparent',
                         yAxisID: 'y1',
                         tension: 0.4,
@@ -710,85 +529,53 @@
             const tr = document.createElement('tr');
             tr.className = "border-b border-ink/10";
             tr.innerHTML = `
-                <td class="px-6 py-4 font-medium">${key}</td>
-                <td class="px-6 py-4 text-right">${formatCurrency(periodSumData2024[idx])}</td>
-                <td class="px-6 py-4 text-right">${formatCurrency(periodSumData2025[idx])}</td>
-                <td class="px-6 py-4 text-right">${periodCountData2024[idx]}</td>
-                <td class="px-6 py-4 text-right">${periodCountData2025[idx]}</td>
+                <td class="px-6 py-4 font-medium">${key} <span class="text-ink/50">(${periodRanges[idx]})</span></td>
+                <td class="px-6 py-4 text-right">${formatCurrency(periodSumData[idx])}</td>
+                <td class="px-6 py-4 text-right">${periodCountData[idx]}</td>
             `;
             tableBody.appendChild(tr);
         });
 
-        // Past 7 Days cards
-        const recentDailyContainer = document.getElementById('recent-daily-cards');
-        [...pastSevenDays].reverse().forEach(({ label }) => {
-            const card = document.createElement('div');
-            card.className = "rounded-lg border border-ink/10 bg-white";
-            const amount = pastSevenSums[label] || 0;
-            card.innerHTML = `
-                <div class="flex items-center justify-between gap-3 p-4">
-                    <div>
-                        <p class="text-sm text-ink/60">#${label}</p>
-                        <p class="text-lg font-bold">${formatCurrency(amount)}</p>
-                    </div>
-                    <span class="material-symbols-outlined text-primary">trending_up</span>
-                </div>
-            `;
-            recentDailyContainer.appendChild(card);
-        });
-
-        const uploadButton = document.getElementById('upload-siyuan-btn');
-        const fileInput = document.getElementById('siyuan-file');
-        const uploadFeedback = document.getElementById('upload-feedback');
-
-        const setUploadStatus = (message, isError = false) => {
-            if (!uploadFeedback) return;
-            uploadFeedback.textContent = message;
-            uploadFeedback.classList.toggle('text-primary', isError);
-            uploadFeedback.classList.toggle('text-ink/60', !isError);
-        };
-
-        async function handleSiyuanUpload() {
-            const file = fileInput?.files?.[0];
-            if (!file) {
-                setUploadStatus('請先選擇 CSV 檔案再上傳。', true);
-                return;
-            }
-
-            uploadButton.disabled = true;
-            const originalLabel = uploadButton.textContent;
-            uploadButton.textContent = 'Uploading...';
-            setUploadStatus('上傳並匯入中，請稍候...');
-
-            try {
-                const csvText = await file.text();
-                const basePath = window.location.pathname.startsWith('/api/') ? '/api' : '';
-                const response = await fetch(`${basePath}/upload-siyuan`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ csvText })
-                });
-                const payload = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    throw new Error(payload.error || '匯入失敗');
+        new Chart(document.getElementById('pastSevenDaysChart'), {
+            type: 'line',
+            data: {
+                labels: pastSevenDays.map(({ label }) => label),
+                datasets: [
+                    {
+                        label: 'Amount',
+                        data: pastSevenDays.map(({ label }) => pastSevenSums[label] || 0),
+                        borderColor: '#e63c23',
+                        backgroundColor: 'rgba(230, 60, 35, 0.12)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#e63c23',
+                        pointBorderColor: '#e63c23',
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => formatCurrency(context.parsed.y || 0)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => formatCurrency(value)
+                        }
+                    }
                 }
-
-                const { inserted = 0, deleted = 0, skippedTapPay = 0, errors = [] } = payload;
-                const errorDetails = errors.slice(0, 3).map((e) => `#${e.line}: ${e.reason}`).join('；');
-                const detailSuffix = errorDetails ? `，${errorDetails}` : '';
-
-                setUploadStatus(`匯入完成：刪除 ${deleted} 筆舊資料，新增 ${inserted} 筆，跳過 ${skippedTapPay} 筆 Tappay 備註${errors.length ? `，${errors.length} 筆失敗` : ''}${detailSuffix}。即將重新整理...`);
-                setTimeout(() => window.location.reload(), 1000);
-            } catch (error) {
-                setUploadStatus(error.message || '匯入失敗', true);
-            } finally {
-                uploadButton.disabled = false;
-                uploadButton.textContent = originalLabel;
             }
-        }
-
-        uploadButton?.addEventListener('click', handleSiyuanUpload);
+        });
 
     </script>
 </body>
