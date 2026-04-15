@@ -1,4 +1,5 @@
 const axios = require("axios");
+const crypto = require("crypto");
 const givingModel = require("../models/giving");
 const { sendGivingSuccessEmail } = require("../services/emailService");
 const { parseSiyuanCsv } = require("../utils/siyuanImport");
@@ -161,49 +162,34 @@ function formatPaymentMethod(method) {
 }
 
 function requireStatsAuth(req, res, respondWithJson = false) {
-  const unauthenticated = () => {
-    res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
-    const message = "Authentication required";
-    if (respondWithJson) {
-      res.status(401).json({ error: message });
-    } else {
-      res.status(401).send(message);
-    }
-  };
+  if (req.session?.statsAuthenticated) {
+    return true;
+  }
 
-  const invalid = () => {
-    res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
-    const message = "Invalid credentials";
-    if (respondWithJson) {
-      res.status(401).json({ error: message });
-    } else {
-      res.status(401).send(message);
-    }
-  };
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    unauthenticated();
+  if (respondWithJson) {
+    res.status(401).json({ error: "Please sign in to continue" });
     return false;
   }
 
-  try {
-    const auth = Buffer.from(authHeader.split(" ")[1], "base64")
-      .toString()
-      .split(":");
-    const password = auth[1];
+  res.status(401).render("stats-login", {
+    error: null,
+  });
+  return false;
+}
 
-    if (password !== STATS_PASSWORD) {
-      invalid();
-      return false;
-    }
-  } catch (error) {
-    invalid();
+function passwordsMatch(candidate, expected) {
+  if (!candidate || !expected) {
     return false;
   }
 
-  return true;
+  const candidateBuffer = Buffer.from(String(candidate));
+  const expectedBuffer = Buffer.from(String(expected));
+
+  if (candidateBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(candidateBuffer, expectedBuffer);
 }
 
 // Worker processing function (shared by all workers)
@@ -399,6 +385,40 @@ const givingController = {
       console.error("Error fetching stats:", error);
       res.status(500).send("Error fetching stats");
     }
+  },
+  statsLogin: (req, res) => {
+    const { password } = req.body;
+
+    if (!passwordsMatch(password, STATS_PASSWORD)) {
+      return res.status(401).render("stats-login", {
+        error: "密碼不正確，請再試一次。",
+      });
+    }
+
+    req.session.statsAuthenticated = true;
+    req.session.save((error) => {
+      if (error) {
+        console.error("Error saving stats session:", error);
+        return res.status(500).send("Error signing in");
+      }
+
+      res.redirect("/stats");
+    });
+  },
+  statsLogout: (req, res) => {
+    if (!req.session) {
+      return res.redirect("/stats");
+    }
+
+    req.session.statsAuthenticated = false;
+    req.session.save((error) => {
+      if (error) {
+        console.error("Error clearing stats session:", error);
+        return res.status(500).send("Error signing out");
+      }
+
+      res.redirect("/stats");
+    });
   },
   uploadSiyuan: async (req, res) => {
     if (!requireStatsAuth(req, res, true)) return;

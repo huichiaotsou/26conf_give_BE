@@ -42,7 +42,7 @@ services:
       REDIS_URL: redis://redis:6379
       WORKERS: ${WORKERS:-5}
       GOOGLE_SECRET: ${GOOGLE_SECRET:-local-google-secret}
-      STATS_PASSWORD: ${STATS_PASSWORD:-local-stats-password}
+      STATS_PASSWORD: ${STATS_PASSWORD:-123456}
       PGUSER: ${PGUSER:-postgres}
       PASSWORD: ${PASSWORD:-postgres}
       HOST: postgres

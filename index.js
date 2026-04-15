@@ -26,12 +26,15 @@ app.use(
 );
 
 app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: false }));
 app.use(flash());
 
 // NGINX 處理 /api/ 這段，所以實際上的 end point 是 /api/payment
 app.post("/payment", givingController.giving);
 app.post("/getall", givingController.get);
 app.get("/stats", givingController.statsPage);
+app.post("/stats/login", givingController.statsLogin);
+app.post("/stats/logout", givingController.statsLogout);
 app.post("/upload-siyuan", givingController.uploadSiyuan);
 
 app.listen(PORT, () => {

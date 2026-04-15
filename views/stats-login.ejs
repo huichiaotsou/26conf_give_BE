@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Giving Dashboard Login</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#e63c23",
+                        ink: "#000007",
+                        sky: "#0689c6",
+                        warm: "#ede6da",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="min-h-screen bg-warm font-display text-ink">
+    <main class="min-h-screen grid place-items-center px-6 py-10">
+        <section class="w-full max-w-md border border-ink/10 bg-[#f8f3ea] p-8 shadow-[0_20px_60px_rgba(0,0,7,0.08)]">
+            <p class="mb-3 text-sm font-bold uppercase text-sky">Giving Dashboard</p>
+            <h1 class="text-4xl font-black leading-tight text-primary">輸入密碼</h1>
+            <p class="mt-4 text-base leading-7 text-ink/70">使用單一數字密碼進入後台。</p>
+
+            <form class="mt-8 flex flex-col gap-4" action="/stats/login" method="post">
+                <label class="flex flex-col gap-2 text-sm font-bold text-ink" for="password">
+                    Password
+                    <input id="password" name="password" type="password" inputmode="numeric" pattern="[0-9]*"
+                        autocomplete="current-password" autofocus required
+                        class="h-14 rounded-lg border border-ink/20 bg-white px-4 text-2xl font-bold text-ink outline-none transition focus:border-sky focus:ring-2 focus:ring-sky/20" />
+                </label>
+
+                <% if (error) { %>
+                    <p class="rounded-lg border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
+                        <%= error %>
+                    </p>
+                <% } %>
+
+                <button type="submit"
+                    class="h-12 rounded-lg bg-primary px-5 text-base font-black text-white transition hover:bg-[#c93420] focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    進入 Dashboard
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+
+</html>

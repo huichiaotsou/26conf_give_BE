@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
@@ -17,9 +17,10 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#4A90E2",
-                        "background-light": "#F4F7FA",
-                        "background-dark": "#101922",
+                        "primary": "#e63c23",
+                        "accent": "#0689c6",
+                        "ink": "#000007",
+                        "background-light": "#ede6da",
                     },
                     fontFamily: {
                         "display": ["Inter", "sans-serif"]
@@ -45,43 +46,52 @@
     </style>
 </head>
 
-<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white">
+<body class="font-display bg-background-light text-ink">
     <div class="flex min-h-screen">
         <main class="flex-1 p-8 overflow-y-auto w-full">
             <div class="max-w-7xl mx-auto">
-                <div class="flex flex-col gap-2 mb-8">
-                    <p class="text-3xl font-bold leading-tight tracking-tight">Giving Dashboard</p>
-                    <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview of key giving metrics.</p>
+                <div class="flex flex-col gap-3 mb-8 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p class="text-sm font-bold uppercase text-accent">Conference Giving</p>
+                        <p class="text-4xl font-black leading-tight text-primary">Giving Dashboard</p>
+                        <p class="text-ink/70 text-base font-normal leading-normal">An overview of key giving metrics.</p>
+                    </div>
+                    <form action="/stats/logout" method="post">
+                        <button type="submit"
+                            class="rounded-lg border border-ink/20 px-4 py-2 text-sm font-bold text-ink transition hover:border-primary hover:text-primary">
+                            Log out
+                        </button>
+                    </form>
                 </div>
 
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div
-                        class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving</p>
+                        class="flex flex-col gap-3 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-ink/70 text-base font-bold leading-normal">Total Giving</p>
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2024</p>
-                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-giving-2024">$0</p>
+                                <p class="text-sm text-accent font-bold">2024</p>
+                                <p class="text-3xl font-bold leading-tight" id="total-giving-2024">$0</p>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2025</p>
-                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-giving-2025">$0</p>
+                                <p class="text-sm text-accent font-bold">2025</p>
+                                <p class="text-3xl font-bold leading-tight" id="total-giving-2025">$0</p>
                             </div>
                         </div>
                     </div>
                     <div
-                        class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving Counts
+                        class="flex flex-col gap-3 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-ink/70 text-base font-bold leading-normal">Total Giving Counts
                         </p>
                         <div class="flex flex-col gap-3">
                             <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2024</p>
-                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-count-2024">0</p>
+                                <p class="text-sm text-accent font-bold">2024</p>
+                                <p class="text-3xl font-bold leading-tight" id="total-count-2024">0</p>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2025</p>
-                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-count-2025">0</p>
+                                <p class="text-sm text-accent font-bold">2025</p>
+                                <p class="text-3xl font-bold leading-tight" id="total-count-2025">0</p>
                             </div>
                         </div>
                     </div>
@@ -90,15 +100,15 @@
                 <!-- Campus Charts -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div
-                        class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-lg font-bold">Giving Sum by Campus</p>
+                        class="flex flex-col gap-4 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary">Giving Sum by Campus</p>
                         <div class="h-64">
                             <canvas id="campusSumChart"></canvas>
                         </div>
                     </div>
                     <div
-                        class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-lg font-bold">Giving Count by Campus</p>
+                        class="flex flex-col gap-4 rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary">Giving Count by Campus</p>
                         <div class="h-64">
                             <canvas id="campusCountChart"></canvas>
                         </div>
@@ -108,10 +118,10 @@
                 <!-- Weekly Trend -->
                 <div class="grid grid-cols-1 gap-8">
                     <div
-                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-lg font-bold mb-1">Weekly Giving Trend</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-1">2024 Week 1: 11/10</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">2025 Week 1: 11/15</p>
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">Weekly Giving Trend</p>
+                        <p class="text-ink/60 text-sm font-normal mb-1">2024 Week 1: 11/10</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">2025 Week 1: 11/15</p>
                         <div class="h-80 w-full">
                             <canvas id="weeklyTrendChart"></canvas>
                         </div>
@@ -119,10 +129,10 @@
 
                     <!-- Table -->
                     <div
-                        class="overflow-x-auto rounded-xl bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        class="overflow-x-auto rounded-lg bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                         <table class="w-full text-left">
                             <thead
-                                class="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 uppercase">
+                                class="bg-[#ede6da] text-xs text-ink/65 uppercase">
                                 <tr>
                                     <th class="px-6 py-3" scope="col">Week Period</th>
                                     <th class="px-6 py-3 text-right" scope="col">Amount 2024</th>
@@ -131,7 +141,7 @@
                                     <th class="px-6 py-3 text-right" scope="col">Count 2025</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-sm text-slate-700 dark:text-slate-300" id="period-table-body">
+                            <tbody class="text-sm text-ink/80" id="period-table-body">
                                 <!-- Populated by JS -->
                             </tbody>
                         </table>
@@ -140,9 +150,9 @@
 
                 <div class="grid grid-cols-1 gap-8 mt-8">
                     <div
-                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-lg font-bold mb-1">Past 7 Days (2025)</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">Daily giving sums (Taipei time, today included)</p>
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">Past 7 Days (2025)</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Daily giving sums (Taipei time, today included)</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="recent-daily-cards">
                             <!-- Populated by JS -->
                         </div>
@@ -151,9 +161,9 @@
 
                 <div class="grid grid-cols-1 gap-8 mt-8">
                     <div
-                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-lg font-bold mb-1">2025 Payment Method Stats</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">思遠 vs TapPay</p>
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">2025 Payment Method Stats</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">思遠 vs TapPay</p>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="h-72">
                                 <canvas id="uploadMixChart"></canvas>
@@ -168,10 +178,10 @@
         </main>
     </div>
 
-    <div class="p-6 bg-white dark:bg-[#192734] border-t border-slate-200 dark:border-slate-700">
+    <div class="p-6 bg-[#f8f3ea] border-t border-ink/10">
         <div class="max-w-7xl mx-auto flex flex-col gap-3">
             <div class="flex flex-col md:flex-row gap-3 md:items-center">
-                <label class="w-full md:w-72 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 text-sm cursor-pointer hover:border-primary transition">
+                <label class="w-full md:w-72 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-ink/25 bg-white text-sm cursor-pointer hover:border-primary transition">
                     <span class="material-symbols-outlined text-primary">upload_file</span>
                     <span class="flex-1 truncate">Upload giving data (CSV)</span>
                     <input id="siyuan-file" type="file" accept=".csv,text/csv" class="hidden" />
@@ -181,7 +191,7 @@
                     Upload giving data
                 </button>
             </div>
-            <p id="upload-feedback" class="text-sm text-slate-500 dark:text-slate-400">
+            <p id="upload-feedback" class="text-sm text-ink/60">
                 Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped and any previous Siyuan uploads are replaced.
             </p>
         </div>
@@ -421,8 +431,8 @@
         document.getElementById('total-count-2025').textContent = totalCount2025.toLocaleString();
 
         // Charts Configuration
-        Chart.defaults.color = '#94a3b8';
-        Chart.defaults.borderColor = '#334155';
+        Chart.defaults.color = '#000007';
+        Chart.defaults.borderColor = 'rgba(0, 0, 7, 0.14)';
         if (window.ChartDataLabels) {
             Chart.register(ChartDataLabels);
         }
@@ -442,13 +452,13 @@
                     {
                         label: '2024',
                         data: campusSum2024Data,
-                        backgroundColor: '#cbd5e1', // light gray
+                        backgroundColor: '#0689c6',
                         borderRadius: 4
                     },
                     {
                         label: '2025',
                         data: campusSum2025Data,
-                        backgroundColor: '#4A90E2',
+                        backgroundColor: '#e63c23',
                         borderRadius: 4
                     }
                 ]
@@ -472,13 +482,13 @@
                     {
                         label: '2024',
                         data: campusCount2024Data,
-                        backgroundColor: '#cbd5e1',
+                        backgroundColor: '#0689c6',
                         borderRadius: 4
                     },
                     {
                         label: '2025',
                         data: campusCount2025Data,
-                        backgroundColor: '#4A90E2',
+                        backgroundColor: '#e63c23',
                         borderRadius: 4
                     }
                 ]
@@ -492,7 +502,7 @@
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
-                        color: '#e2e8f0',
+                        color: '#000007',
                         formatter: (value) => value.toLocaleString()
                     }
                 }
@@ -510,7 +520,7 @@
                     datasets: [
                         {
                             data: uploadMixData,
-                            backgroundColor: ['#4A90E2', '#cbd5e1'],
+                            backgroundColor: ['#e63c23', '#0689c6'],
                             borderWidth: 0
                         }
                     ]
@@ -545,13 +555,13 @@
                         {
                             label: '思遠',
                             data: weeklySiyuanCount2025,
-                            backgroundColor: '#4A90E2',
+                            backgroundColor: '#e63c23',
                             borderRadius: 4
                         },
                         {
                             label: 'TapPay',
                             data: weeklyNativeCount2025,
-                            backgroundColor: '#cbd5e1',
+                            backgroundColor: '#0689c6',
                             borderRadius: 4
                         }
                     ]
@@ -599,7 +609,7 @@
                     {
                         label: 'Amount 2024',
                         data: periodSumData2024,
-                        borderColor: '#cbd5e1',
+                        borderColor: '#0689c6',
                         backgroundColor: 'transparent',
                         ranges: periodRanges2024,
                         fill: false,
@@ -610,7 +620,7 @@
                     {
                         label: 'Count 2024',
                         data: periodCountData2024,
-                        borderColor: '#94a3b8',
+                        borderColor: '#0689c6',
                         ranges: periodRanges2024,
                         backgroundColor: 'transparent',
                         yAxisID: 'y1',
@@ -619,14 +629,14 @@
                         datalabels: {
                             anchor: 'end',
                             align: 'bottom',
-                            color: '#cbd5e1',
+                            color: '#000007',
                             formatter: (value) => value.toLocaleString()
                         }
                     },
                     {
                         label: 'Amount 2025',
                         data: periodSumData2025,
-                        borderColor: '#4A90E2',
+                        borderColor: '#e63c23',
                         backgroundColor: 'transparent',
                         ranges: periodRanges2025,
                         fill: false,
@@ -637,7 +647,7 @@
                     {
                         label: 'Count 2025',
                         data: periodCountData2025,
-                        borderColor: '#4A90E2',
+                        borderColor: '#e63c23',
                         ranges: periodRanges2025,
                         backgroundColor: 'transparent',
                         yAxisID: 'y1',
@@ -646,7 +656,7 @@
                         datalabels: {
                             anchor: 'end',
                             align: 'bottom',
-                            color: '#cbd5e1',
+                            color: '#000007',
                             formatter: (value) => value.toLocaleString()
                         }
                     }
@@ -698,7 +708,7 @@
         const tableBody = document.getElementById('period-table-body');
         weekLabels.forEach((key, idx) => {
             const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-200 dark:border-slate-700";
+            tr.className = "border-b border-ink/10";
             tr.innerHTML = `
                 <td class="px-6 py-4 font-medium">${key}</td>
                 <td class="px-6 py-4 text-right">${formatCurrency(periodSumData2024[idx])}</td>
@@ -713,12 +723,12 @@
         const recentDailyContainer = document.getElementById('recent-daily-cards');
         [...pastSevenDays].reverse().forEach(({ label }) => {
             const card = document.createElement('div');
-            card.className = "rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60";
+            card.className = "rounded-lg border border-ink/10 bg-white";
             const amount = pastSevenSums[label] || 0;
             card.innerHTML = `
                 <div class="flex items-center justify-between gap-3 p-4">
                     <div>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">#${label}</p>
+                        <p class="text-sm text-ink/60">#${label}</p>
                         <p class="text-lg font-bold">${formatCurrency(amount)}</p>
                     </div>
                     <span class="material-symbols-outlined text-primary">trending_up</span>
@@ -734,9 +744,8 @@
         const setUploadStatus = (message, isError = false) => {
             if (!uploadFeedback) return;
             uploadFeedback.textContent = message;
-            uploadFeedback.classList.toggle('text-rose-500', isError);
-            uploadFeedback.classList.toggle('text-slate-500', !isError);
-            uploadFeedback.classList.toggle('dark:text-slate-400', !isError);
+            uploadFeedback.classList.toggle('text-primary', isError);
+            uploadFeedback.classList.toggle('text-ink/60', !isError);
         };
 
         async function handleSiyuanUpload() {

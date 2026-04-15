@@ -5,11 +5,11 @@ Express backend that accepts donation submissions, charges them through TapPay, 
 Keep in mind that this repo intentionally stays small—there is no ORM, no migration system, and the queue/worker live in the same Node process. That simplicity makes it easy to reason about, but it also means you must remember the manual steps (Redis, Postgres schema, env vars) whenever you pick it up again.
 
 ## How the system hangs together
-- **Entry point (`index.js`)** – boots Express, sessions, JSON parser, CORS, and mounts three routes: `POST /payment`, `POST /getall`, and `GET /stats` (NGINX in front adds the `/api` prefix in production).
+- **Entry point (`index.js`)** – boots Express, sessions, form/JSON parsers, CORS, and mounts payment, data sync, stats login/logout, dashboard, and Siyuan upload routes (NGINX in front adds the `/api` prefix in production).
 - **Payment controller (`controllers/giving.js`)** – validates incoming payloads (including the `cardholder.campus` flag the frontend now passes), calls TapPay, converts the record into a DB-friendly shape, and enqueues a job on the `tappay-payments` BullMQ queue. Five workers (hardcoded) pull jobs and write rows to Postgres.
 - **Email service (`services/emailService.js` + `emails/givingSuccess.html`)** – once TapPay confirms a payment, the controller asks this module to send an HTML receipt through the Google Workspace mailbox (`noreply@thehope.co`).
 - **Data layer (`models/giving.js` + `db.js`)** – uses `pg` to insert/read from the `confgive` table. Schema definition lives in `schema.sql` so you can recreate the database quickly, including the `is_success` flag and `env` (sandbox/production) columns.
-- **Supporting files** – `views/stats.ejs` (Tailwind + Chart.js dashboard behind basic auth), `stresstest.yaml` (Artillery load scenario), `AGENTS.md` (notes), and `package.json` for dependencies/scripts.
+- **Supporting files** – `views/stats.ejs` (Tailwind + Chart.js dashboard), `views/stats-login.ejs` (single-password stats login), `stresstest.yaml` (Artillery load scenario), `AGENTS.md` (notes), and `package.json` for dependencies/scripts.
 
 ### Request lifecycle
 1. Frontend sends `{ prime, amount, cardholder }` to `POST /payment` (`/api/payment` once the NGINX prefix is added).
@@ -60,7 +60,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `REDIS_URL` | Redis connection string for BullMQ (`redis://user:pass@host:port/db`). |
 | `WORKERS` | Expected worker count (currently unused; code spawns 5 workers). |
 | `GOOGLE_SECRET` | Shared secret for `POST /api/getall`. |
-| `STATS_PASSWORD` | Basic auth password for the `/stats` dashboard (username ignored). |
+| `STATS_PASSWORD` | Single password for the `/stats` dashboard login page. |
 | `PGUSER` | PostgreSQL user. |
 | `PASSWORD` | PostgreSQL password. |
 | `HOST` | PostgreSQL host. |
@@ -83,7 +83,7 @@ CURRENCY=TWD
 REDIS_URL=redis://localhost:6379
 WORKERS=5
 GOOGLE_SECRET=super-secret
-STATS_PASSWORD=stats-pass
+STATS_PASSWORD=123456
 PGUSER=postgres
 PASSWORD=postgres
 HOST=127.0.0.1
@@ -179,11 +179,16 @@ npm install
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
 - `POST /upload-siyuan`
   - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
-  - Auth: Same Basic Auth password as `/stats`.
+  - Auth: Requires the same logged-in stats session as `/stats`.
   - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
 - `GET /stats`
-  - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
+  - Auth: If no stats session exists, renders `views/stats-login.ejs` so the user can enter `STATS_PASSWORD`.
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
+- `POST /stats/login`
+  - Body: form-encoded `{ password }`.
+  - Behavior: Compares the submitted password with `STATS_PASSWORD`, stores `req.session.statsAuthenticated = true`, then redirects to `/stats`.
+- `POST /stats/logout`
+  - Behavior: Clears the stats session flag and redirects to `/stats`.
 
 ### Siyuan CSV import rules
 - Columns expected (A → I): ignore donation sequence, `siyuan_id` (B), ignore C and E, campus (D), amount (F), order time (G), payment method (H), note (I).
