@@ -110,6 +110,8 @@ Key columns inside `public.confgive`:
 - TapPay metadata: `tp_trade_id`, `is_success` (bool), `env` (`sandbox` or `production`), `created_at`
 - Siyuan import metadata: `imported` (bool, defaults to false for native payments) and `siyuan_id` (text identifier from Siyuan)
 
+`public.stats_events` stores the shared named date ranges shown in `/stats`. It has a unique event name plus inclusive `start_date` and `end_date`; the dashboard defaults to the event with the latest end date.
+
 Manual migration helper when you see `column "is_success" does not exist`:
 ```sql
 ALTER TABLE public.confgive
@@ -187,7 +189,14 @@ npm install
   - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
 - `GET /stats` (`/api/stats` externally when `PUBLIC_PATH_PREFIX=/api` and NGINX strips `/api`)
   - Auth: If no stats session exists, renders `views/stats-login.ejs` so the user can enter `STATS_PASSWORD`.
-  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
+  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. The selected event (or the one with the latest end date by default) filters all dashboard metrics; its dates are dynamically split into weekly trend periods.
+- `POST /stats/events`
+  - Auth: Requires the same logged-in stats session as `/stats`.
+  - Body: form-encoded `{ name, startDate, endDate }`, using `YYYY-MM-DD` dates.
+  - Behavior: Adds a shared dashboard event and redirects to it.
+- `POST /stats/events/:id/delete`
+  - Auth: Requires the same logged-in stats session as `/stats`.
+  - Behavior: Deletes the selected event definition only; no giving records are deleted.
 - `GET /rows` (`/api/rows` externally when `PUBLIC_PATH_PREFIX=/api`)
   - Auth: Requires a separate administrator session created with `POST /rows/login` and `ADMIN_CODE`.
   - Behavior: Renders `views/rows.ejs`, showing production, successful giving records newest-first, 200 rows per page. Each row can be permanently deleted after a browser confirmation; `POST /rows/:id/delete` is administrator-only.

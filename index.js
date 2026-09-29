@@ -45,6 +45,8 @@ app.use((req, res, next) => {
 app.post("/payment", givingController.giving);
 app.post("/getall", givingController.get);
 app.get("/stats", givingController.statsPage);
+app.post("/stats/events", givingController.createStatsEvent);
+app.post("/stats/events/:id/delete", givingController.deleteStatsEvent);
 app.post("/stats/login", givingController.statsLogin);
 app.post("/stats/logout", givingController.statsLogout);
 app.get("/rows", givingController.rowsPage);

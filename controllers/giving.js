@@ -1,6 +1,7 @@
 const axios = require("axios");
 const crypto = require("crypto");
 const givingModel = require("../models/giving");
+const statsEventModel = require("../models/statsEvent");
 const { sendGivingSuccessEmail } = require("../services/emailService");
 const { parseSiyuanCsv } = require("../utils/siyuanImport");
 
@@ -403,11 +404,54 @@ const givingController = {
     if (!requireStatsAuth(req, res)) return;
 
     try {
-      const data = await givingModel.get(0);
-      res.render("stats", { data });
+      const [data, events] = await Promise.all([
+        givingModel.get(0),
+        statsEventModel.getAll(),
+      ]);
+      const requestedEventId = Number(req.query.eventId);
+      const selectedEvent =
+        events.find((event) => event.id === requestedEventId) || events[0] || null;
+
+      res.render("stats", {
+        data,
+        events,
+        selectedEvent,
+        eventError: req.query.eventError || null,
+      });
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).send("Error fetching stats");
+    }
+  },
+  createStatsEvent: async (req, res) => {
+    if (!requireStatsAuth(req, res)) return;
+
+    const name = String(req.body.name || "").trim();
+    const startDate = String(req.body.startDate || "");
+    const endDate = String(req.body.endDate || "");
+    const validDate = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!name || !validDate.test(startDate) || !validDate.test(endDate) || startDate > endDate) {
+      return res.redirect(`${statsPath(req)}?eventError=${encodeURIComponent("請輸入名稱，以及有效的起訖日期。")}`);
+    }
+
+    try {
+      const event = await statsEventModel.create({ name, startDate, endDate });
+      return res.redirect(`${statsPath(req)}?eventId=${event.id}`);
+    } catch (error) {
+      const message = error.code === "23505" ? "活動名稱已存在。" : "無法新增活動，請稍後再試。";
+      return res.redirect(`${statsPath(req)}?eventError=${encodeURIComponent(message)}`);
+    }
+  },
+  deleteStatsEvent: async (req, res) => {
+    if (!requireStatsAuth(req, res)) return;
+
+    try {
+      await statsEventModel.deleteById(Number(req.params.id));
+      return res.redirect(statsPath(req));
+    } catch (error) {
+      console.error("Error deleting stats event:", error);
+      return res.redirect(`${statsPath(req)}?eventError=${encodeURIComponent("無法刪除活動，請稍後再試。")}`);
     }
   },
   statsLogin: (req, res) => {

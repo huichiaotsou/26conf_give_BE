@@ -52,7 +52,6 @@
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-col gap-3 mb-8 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p class="text-sm font-bold uppercase text-accent">The Hope Conference 2026</p>
                         <p class="text-4xl font-black leading-tight text-primary">Giving Dashboard</p>
                     </div>
                     <form action="<%= publicPathPrefix %>/stats/logout" method="post">
@@ -62,6 +61,58 @@
                         </button>
                     </form>
                 </div>
+
+                <section class="mb-8 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                    <div class="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p class="text-lg font-black text-primary">Event settings</p>
+                            <p class="text-sm text-ink/60">Choose the event date range used by this dashboard. The latest event is selected by default.</p>
+                        </div>
+                        <% if (selectedEvent) { %>
+                            <p class="text-sm font-bold text-ink"><%= selectedEvent.name %> · <%= selectedEvent.start_date %> – <%= selectedEvent.end_date %></p>
+                        <% } %>
+                    </div>
+                    <% if (eventError) { %>
+                        <p class="mb-4 rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800"><%= eventError %></p>
+                    <% } %>
+                    <div class="grid gap-6 lg:grid-cols-2">
+                        <form action="<%= publicPathPrefix %>/stats" method="get" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <label class="flex-1 text-sm font-bold text-ink/70">Dashboard event
+                                <select name="eventId" onchange="this.form.submit()" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 text-ink focus:border-primary focus:ring-primary">
+                                    <% if (!events.length) { %><option value="">No events configured</option><% } %>
+                                    <% events.forEach((event) => { %>
+                                        <option value="<%= event.id %>" <%= selectedEvent && event.id === selectedEvent.id ? 'selected' : '' %>><%= event.name %> (<%= event.start_date %> – <%= event.end_date %>)</option>
+                                    <% }) %>
+                                </select>
+                            </label>
+                            <noscript><button class="rounded-md bg-primary px-4 py-2 font-bold text-white" type="submit">View</button></noscript>
+                        </form>
+                        <form action="<%= publicPathPrefix %>/stats/events" method="post" class="grid gap-3 sm:grid-cols-4 sm:items-end">
+                            <label class="text-sm font-bold text-ink/70">Event name
+                                <input required name="name" maxlength="120" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" placeholder="Conf26" />
+                            </label>
+                            <label class="text-sm font-bold text-ink/70">Start date
+                                <input required name="startDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
+                            </label>
+                            <label class="text-sm font-bold text-ink/70">End date
+                                <input required name="endDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
+                            </label>
+                            <button type="submit" class="rounded-md bg-primary px-4 py-2 font-bold text-white transition hover:bg-primary/90">Add event</button>
+                        </form>
+                    </div>
+                    <% if (events.length) { %>
+                        <div class="mt-5 border-t border-ink/10 pt-4">
+                            <p class="mb-2 text-sm font-bold text-ink/70">Configured events</p>
+                            <div class="flex flex-wrap gap-2">
+                                <% events.forEach((event) => { %>
+                                    <form action="<%= publicPathPrefix %>/stats/events/<%= event.id %>/delete" method="post" onsubmit="return confirm('Delete this event?');">
+                                        <button type="submit" class="rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover:border-red-600 hover:text-red-700"><%= event.name %> · <%= event.start_date %> – <%= event.end_date %> ×</button>
+                                    </form>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
+                </section>
 
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -132,7 +183,7 @@
                     <div
                         class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                         <p class="text-lg font-black text-primary mb-1">Top 30 Givers</p>
-                        <p class="text-ink/60 text-sm font-normal mb-4">Ranked by total giving amount in 2026.</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Ranked by total giving amount in the selected event.</p>
                         <div class="h-[48rem] w-full">
                             <canvas id="topGiversChart"></canvas>
                         </div>
@@ -144,7 +195,7 @@
                     <div
                         class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                         <p class="text-lg font-black text-primary mb-1">Weekly Giving Trend</p>
-                        <p class="text-ink/60 text-sm font-normal mb-4">Conference weeks.</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Weekly totals for the selected event.</p>
                         <div class="h-80 w-full">
                             <canvas id="weeklyTrendChart"></canvas>
                         </div>
@@ -175,9 +226,13 @@
     <script id="server-data" type="application/json">
         <%- JSON.stringify(data) %>
     </script>
+    <script id="selected-event" type="application/json">
+        <%- JSON.stringify(selectedEvent) %>
+    </script>
     <script>
         // Inject data from server
         const rawData = JSON.parse(document.getElementById('server-data').textContent);
+        const selectedEvent = JSON.parse(document.getElementById('selected-event').textContent);
 
         const taipeiDateFormatter = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Taipei',
@@ -211,21 +266,28 @@
             return Date.UTC(year, month - 1, day);
         };
 
-        const DASHBOARD_YEAR = 2026;
+        const toDateOnly = (dateValue) => dateValue ? String(dateValue).slice(0, 10) : null;
+        const formatRangeDate = (dateOnly) => {
+            const [, month, day] = dateOnly.split('-');
+            return `${Number(month)}/${Number(day)}`;
+        };
+        const buildPeriodDefinitions = (event) => {
+            const start = toDateOnly(event?.start_date);
+            const end = toDateOnly(event?.end_date);
+            if (!start || !end) return [];
 
-        const getDateYear = (dateStr) => {
-            if (!dateStr) return null;
-            const dateOnly = String(dateStr).slice(0, 10);
-            const [year] = dateOnly.split('-').map(Number);
-            return Number.isNaN(year) ? null : year;
+            const endMs = Date.parse(`${end}T00:00:00Z`);
+            const periods = [];
+            for (let currentMs = Date.parse(`${start}T00:00:00Z`); currentMs <= endMs; currentMs += 7 * DAY_MS) {
+                const bucketEndMs = Math.min(currentMs + (6 * DAY_MS), endMs);
+                const bucketStart = new Date(currentMs).toISOString().slice(0, 10);
+                const bucketEnd = new Date(bucketEndMs).toISOString().slice(0, 10);
+                periods.push({ start: bucketStart, end: bucketEnd, range: `${formatRangeDate(bucketStart)}-${formatRangeDate(bucketEnd)}` });
+            }
+            return periods;
         };
 
-        const periodDefinitions = [
-            { start: `${DASHBOARD_YEAR}-04-20`, end: `${DASHBOARD_YEAR}-04-26`, range: '4/20-4/26' },
-            { start: `${DASHBOARD_YEAR}-04-27`, end: `${DASHBOARD_YEAR}-05-03`, range: '4/27-5/3' },
-            { start: `${DASHBOARD_YEAR}-05-04`, end: `${DASHBOARD_YEAR}-05-10`, range: '5/4-5/10' },
-            { start: `${DASHBOARD_YEAR}-05-11`, end: `${DASHBOARD_YEAR}-05-17`, range: '5/11-5/17' },
-        ];
+        const periodDefinitions = buildPeriodDefinitions(selectedEvent);
         const maxWeeks = periodDefinitions.length;
         const weekLabels = Array.from({ length: maxWeeks }, (_, idx) => `Week ${idx + 1}`);
         const chartWeekLabels = weekLabels;
@@ -291,9 +353,7 @@
 
         rawData.forEach(item => {
             const amount = Number(item.amount) || 0;
-            const year = getDateYear(item.date);
             const dateOnly = String(item.date).slice(0, 10);
-            if (year !== DASHBOARD_YEAR) return;
 
             const weekIndex = findWeekIndex(dateOnly);
             if (weekIndex < 0) return;

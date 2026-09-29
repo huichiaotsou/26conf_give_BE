@@ -28,6 +28,20 @@ CREATE TABLE IF NOT EXISTS public.confgive (
 -- 你原本像是想建索引；這裡補成可執行的語法
 CREATE INDEX IF NOT EXISTS confgive_tp_trade_id_idx ON public.confgive (tp_trade_id);
 
+-- Shared, named date ranges used to filter the stats dashboard.
+CREATE TABLE IF NOT EXISTS public.stats_events (
+    id          BIGSERIAL PRIMARY KEY,
+    name        TEXT NOT NULL UNIQUE,
+    start_date  DATE NOT NULL,
+    end_date    DATE NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (start_date <= end_date)
+);
+
+CREATE INDEX IF NOT EXISTS stats_events_latest_idx
+  ON public.stats_events (end_date DESC, start_date DESC);
+
 ALTER TABLE public.confgive
   ADD COLUMN IF NOT EXISTS campus TEXT,
   ADD COLUMN IF NOT EXISTS imported BOOLEAN NOT NULL DEFAULT FALSE,
