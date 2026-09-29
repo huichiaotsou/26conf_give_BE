@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.confgive (
 CREATE INDEX IF NOT EXISTS confgive_tp_trade_id_idx ON public.confgive (tp_trade_id);
 
 -- Shared, named date ranges used to filter the stats dashboard.
-CREATE TABLE IF NOT EXISTS public.stats_events (
+CREATE TABLE IF NOT EXISTS public.stats_date_presets (
     id          BIGSERIAL PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
     start_date  DATE NOT NULL,
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS public.stats_events (
     CHECK (start_date <= end_date)
 );
 
-CREATE INDEX IF NOT EXISTS stats_events_latest_idx
-  ON public.stats_events (end_date DESC, start_date DESC);
+CREATE INDEX IF NOT EXISTS stats_date_presets_latest_idx
+  ON public.stats_date_presets (end_date DESC, start_date DESC);
 
 ALTER TABLE public.confgive
   ADD COLUMN IF NOT EXISTS campus TEXT,

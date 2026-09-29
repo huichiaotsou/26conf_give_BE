@@ -110,7 +110,7 @@ Key columns inside `public.confgive`:
 - TapPay metadata: `tp_trade_id`, `is_success` (bool), `env` (`sandbox` or `production`), `created_at`
 - Siyuan import metadata: `imported` (bool, defaults to false for native payments) and `siyuan_id` (text identifier from Siyuan)
 
-`public.stats_events` stores the shared named date ranges shown in `/stats`. It has a unique event name plus inclusive `start_date` and `end_date`; the dashboard defaults to the event with the latest end date.
+`public.stats_date_presets` stores the shared named date ranges shown in `/stats`. It has a unique event name plus inclusive `start_date` and `end_date`; the dashboard defaults to the event with the latest end date.
 
 Manual migration helper when you see `column "is_success" does not exist`:
 ```sql
