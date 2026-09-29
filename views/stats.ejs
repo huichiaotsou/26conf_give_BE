@@ -43,6 +43,9 @@
                 'GRAD' 0,
                 'opsz' 24
         }
+        dialog::backdrop {
+            background: rgba(0, 0, 7, 0.5);
+        }
     </style>
 </head>
 
@@ -54,65 +57,73 @@
                     <div>
                         <p class="text-4xl font-black leading-tight text-primary">Giving Dashboard</p>
                     </div>
-                    <form action="<%= publicPathPrefix %>/stats/logout" method="post">
-                        <button type="submit"
-                            class="rounded-lg border border-ink/20 px-4 py-2 text-sm font-bold text-ink transition hover:border-primary hover:text-primary">
-                            Log out
+                    <div class="flex items-center gap-2">
+                        <button type="button" aria-label="Event settings" title="Event settings"
+                            onclick="document.getElementById('event-settings-dialog').showModal()"
+                            class="grid size-10 place-items-center rounded-lg border border-ink/20 text-ink transition hover:border-primary hover:text-primary">
+                            <span class="material-symbols-outlined">settings</span>
                         </button>
-                    </form>
+                        <form action="<%= publicPathPrefix %>/stats/logout" method="post">
+                            <button type="submit"
+                                class="rounded-lg border border-ink/20 px-4 py-2 text-sm font-bold text-ink transition hover:border-primary hover:text-primary">
+                                Log out
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
-                <section class="mb-8 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                    <div class="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <dialog id="event-settings-dialog" class="w-[calc(100%-2rem)] max-w-4xl rounded-xl border border-ink/10 bg-[#f8f3ea] p-0 text-ink shadow-2xl">
+                    <section class="p-6">
+                        <div class="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p class="text-lg font-black text-primary">Event settings</p>
                             <p class="text-sm text-ink/60">Choose the event date range used by this dashboard. The latest event is selected by default.</p>
                         </div>
-                        <% if (selectedEvent) { %>
-                            <p class="text-sm font-bold text-ink"><%= selectedEvent.name %> · <%= selectedEvent.start_date %> – <%= selectedEvent.end_date %></p>
-                        <% } %>
-                    </div>
-                    <% if (eventError) { %>
-                        <p class="mb-4 rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800"><%= eventError %></p>
-                    <% } %>
-                    <div class="grid gap-6 lg:grid-cols-2">
-                        <form action="<%= publicPathPrefix %>/stats" method="get" class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                            <label class="flex-1 text-sm font-bold text-ink/70">Dashboard event
-                                <select name="eventId" onchange="this.form.submit()" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 text-ink focus:border-primary focus:ring-primary">
-                                    <% if (!events.length) { %><option value="">No events configured</option><% } %>
-                                    <% events.forEach((event) => { %>
-                                        <option value="<%= event.id %>" <%= selectedEvent && event.id === selectedEvent.id ? 'selected' : '' %>><%= event.name %> (<%= event.start_date %> – <%= event.end_date %>)</option>
-                                    <% }) %>
-                                </select>
-                            </label>
-                            <noscript><button class="rounded-md bg-primary px-4 py-2 font-bold text-white" type="submit">View</button></noscript>
-                        </form>
-                        <form action="<%= publicPathPrefix %>/stats/events" method="post" class="grid gap-3 sm:grid-cols-4 sm:items-end">
-                            <label class="text-sm font-bold text-ink/70">Event name
-                                <input required name="name" maxlength="120" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" placeholder="Conf26" />
-                            </label>
-                            <label class="text-sm font-bold text-ink/70">Start date
-                                <input required name="startDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
-                            </label>
-                            <label class="text-sm font-bold text-ink/70">End date
-                                <input required name="endDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
-                            </label>
-                            <button type="submit" class="rounded-md bg-primary px-4 py-2 font-bold text-white transition hover:bg-primary/90">Add event</button>
-                        </form>
-                    </div>
-                    <% if (events.length) { %>
-                        <div class="mt-5 border-t border-ink/10 pt-4">
-                            <p class="mb-2 text-sm font-bold text-ink/70">Configured events</p>
-                            <div class="flex flex-wrap gap-2">
-                                <% events.forEach((event) => { %>
-                                    <form action="<%= publicPathPrefix %>/stats/events/<%= event.id %>/delete" method="post" onsubmit="return confirm('Delete this event?');">
-                                        <button type="submit" class="rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover:border-red-600 hover:text-red-700"><%= event.name %> · <%= event.start_date %> – <%= event.end_date %> ×</button>
-                                    </form>
-                                <% }) %>
-                            </div>
+                            <form method="dialog"><button class="grid size-9 place-items-center rounded-md text-ink/60 hover:bg-ink/10 hover:text-ink" aria-label="Close event settings"><span class="material-symbols-outlined">close</span></button></form>
                         </div>
-                    <% } %>
-                </section>
+                        <% if (eventError) { %>
+                            <p class="mb-4 rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800"><%= eventError %></p>
+                        <% } %>
+                        <div class="grid gap-6 lg:grid-cols-2">
+                            <form action="<%= publicPathPrefix %>/stats" method="get" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                                <label class="flex-1 text-sm font-bold text-ink/70">Dashboard event
+                                    <select name="eventId" onchange="this.form.submit()" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 text-ink focus:border-primary focus:ring-primary">
+                                        <% if (!events.length) { %><option value="">No events configured</option><% } %>
+                                        <% events.forEach((event) => { %>
+                                            <option value="<%= event.id %>" <%= selectedEvent && event.id === selectedEvent.id ? 'selected' : '' %>><%= event.name %> (<%= event.start_date %> – <%= event.end_date %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </label>
+                                <noscript><button class="rounded-md bg-primary px-4 py-2 font-bold text-white" type="submit">View</button></noscript>
+                            </form>
+                            <form action="<%= publicPathPrefix %>/stats/events" method="post" class="grid gap-3 sm:grid-cols-4 sm:items-end">
+                                <label class="text-sm font-bold text-ink/70">Event name
+                                    <input required name="name" maxlength="120" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" placeholder="Conf26" />
+                                </label>
+                                <label class="text-sm font-bold text-ink/70">Start date
+                                    <input required name="startDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
+                                </label>
+                                <label class="text-sm font-bold text-ink/70">End date
+                                    <input required name="endDate" type="date" class="mt-1 block w-full rounded-md border-ink/20 bg-white px-3 py-2 focus:border-primary focus:ring-primary" />
+                                </label>
+                                <button type="submit" class="rounded-md bg-primary px-4 py-2 font-bold text-white transition hover:bg-primary/90">Add event</button>
+                            </form>
+                        </div>
+                        <% if (events.length) { %>
+                            <div class="mt-5 border-t border-ink/10 pt-4">
+                                <p class="mb-2 text-sm font-bold text-ink/70">Configured events</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <% events.forEach((event) => { %>
+                                        <form action="<%= publicPathPrefix %>/stats/events/<%= event.id %>/delete" method="post" onsubmit="return confirm('Delete this event?');">
+                                            <button type="submit" class="rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover:border-red-600 hover:text-red-700"><%= event.name %> · <%= event.start_date %> – <%= event.end_date %> ×</button>
+                                        </form>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+                    </section>
+                </dialog>
+                <% if (eventError) { %><script>document.getElementById('event-settings-dialog').showModal();</script><% } %>
 
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
