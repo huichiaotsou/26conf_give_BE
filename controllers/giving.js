@@ -408,9 +408,9 @@ const givingController = {
         givingModel.get(0),
         statsEventModel.getAll(),
       ]);
-      const requestedEventId = Number(req.query.eventId);
+      const requestedEventId = String(req.query.eventId || "");
       const selectedEvent =
-        events.find((event) => event.id === requestedEventId) || events[0] || null;
+        events.find((event) => String(event.id) === requestedEventId) || events[0] || null;
 
       res.render("stats", {
         data,
