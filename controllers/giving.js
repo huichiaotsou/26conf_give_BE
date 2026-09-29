@@ -13,6 +13,7 @@ const {
   WORKERS,
   GOOGLE_SECRET,
   STATS_PASSWORD,
+  ADMIN_CODE,
 } = process.env;
 
 if (
@@ -22,10 +23,11 @@ if (
   !CURRENCY ||
   !REDIS_URL ||
   !WORKERS ||
-  !GOOGLE_SECRET
+  !GOOGLE_SECRET ||
+  !ADMIN_CODE
 ) {
   throw new Error(
-    "Missing required environment variables (PARTNER_KEY, MERCHANT_ID, TAPPAY_API, CURRENCY, REDIS_URL, WORKERS)"
+    "Missing required environment variables (PARTNER_KEY, MERCHANT_ID, TAPPAY_API, CURRENCY, REDIS_URL, WORKERS, GOOGLE_SECRET, ADMIN_CODE)"
   );
 }
 
@@ -179,6 +181,24 @@ function requireStatsAuth(req, res, respondWithJson = false) {
 
 function statsPath(req) {
   return `${req.app.locals.publicPathPrefix || ""}/stats`;
+}
+
+function rowsPath(req) {
+  return `${req.app.locals.publicPathPrefix || ""}/rows`;
+}
+
+function requireAdminAuth(req, res, respondWithJson = false) {
+  if (req.session?.adminAuthenticated) {
+    return true;
+  }
+
+  if (respondWithJson) {
+    res.status(401).json({ error: "Admin sign-in required" });
+    return false;
+  }
+
+  res.status(401).render("admin-login", { error: null });
+  return false;
 }
 
 function passwordsMatch(candidate, expected) {
@@ -423,6 +443,94 @@ const givingController = {
 
       res.redirect(statsPath(req));
     });
+  },
+  rowsPage: async (req, res) => {
+    if (!requireAdminAuth(req, res)) return;
+
+    const requestedPage = Number.parseInt(req.query.page, 10);
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+    const pageSize = 200;
+
+    try {
+      let { rows, total } = await givingModel.getPage(
+        pageSize,
+        (page - 1) * pageSize
+      );
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const currentPage = Math.min(page, totalPages);
+
+      if (currentPage !== page) {
+        ({ rows, total } = await givingModel.getPage(
+          pageSize,
+          (currentPage - 1) * pageSize
+        ));
+      }
+
+      res.render("rows", {
+        rows,
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+      });
+    } catch (error) {
+      console.error("Error fetching giving rows:", error);
+      res.status(500).send("Error fetching giving rows");
+    }
+  },
+  rowsLogin: (req, res) => {
+    const { code } = req.body;
+
+    if (!passwordsMatch(code, ADMIN_CODE)) {
+      return res.status(401).render("admin-login", {
+        error: "管理員代碼不正確，請再試一次。",
+      });
+    }
+
+    req.session.adminAuthenticated = true;
+    req.session.save((error) => {
+      if (error) {
+        console.error("Error saving admin session:", error);
+        return res.status(500).send("Error signing in");
+      }
+
+      res.redirect(rowsPath(req));
+    });
+  },
+  rowsLogout: (req, res) => {
+    if (!req.session) return res.redirect(rowsPath(req));
+
+    req.session.adminAuthenticated = false;
+    req.session.save((error) => {
+      if (error) {
+        console.error("Error clearing admin session:", error);
+        return res.status(500).send("Error signing out");
+      }
+
+      res.redirect(rowsPath(req));
+    });
+  },
+  deleteRow: async (req, res) => {
+    if (!requireAdminAuth(req, res)) return;
+
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isSafeInteger(id) || id < 1) {
+      return res.status(400).send("Invalid giving record ID");
+    }
+
+    try {
+      const deleted = await givingModel.deleteById(id);
+      if (!deleted) return res.status(404).send("Giving record not found");
+
+      const page = Number.parseInt(req.body.page, 10);
+      const pageQuery = Number.isSafeInteger(page) && page > 1 ? `?page=${page}` : "";
+      res.redirect(`${rowsPath(req)}${pageQuery}`);
+    } catch (error) {
+      console.error("Error deleting giving row:", error);
+      res.status(500).send("Error deleting giving row");
+    }
   },
   uploadSiyuan: async (req, res) => {
     if (!requireStatsAuth(req, res, true)) return;

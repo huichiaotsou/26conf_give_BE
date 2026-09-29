@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Giving Records</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+</head>
+<body class="min-h-screen bg-stone-100 text-stone-900">
+  <% const formatDate = (value) => value ? new Intl.DateTimeFormat('zh-TW', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Taipei' }).format(new Date(value)) : ''; %>
+  <main class="mx-auto max-w-[1800px] px-4 py-8 sm:px-8">
+    <header class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-wider text-orange-700">Giving administration</p>
+        <h1 class="mt-1 text-3xl font-black">歷史捐款紀錄</h1>
+        <p class="mt-2 text-sm text-stone-600">共 <%= total %> 筆；每頁 <%= pageSize %> 筆。僅列出正式環境的成功捐款。</p>
+      </div>
+      <form action="<%= publicPathPrefix %>/rows/logout" method="post">
+        <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-bold hover:bg-stone-50" type="submit">登出管理員</button>
+      </form>
+    </header>
+
+    <section class="mt-6 overflow-x-auto rounded-lg border border-stone-200 bg-white shadow-sm">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-stone-800 text-xs uppercase tracking-wide text-white">
+          <tr>
+            <th class="px-3 py-3">ID</th><th class="px-3 py-3">日期</th><th class="px-3 py-3">姓名</th>
+            <th class="px-3 py-3">金額</th><th class="px-3 py-3">分部</th><th class="px-3 py-3">付款方式</th>
+            <th class="px-3 py-3">Email</th><th class="px-3 py-3">電話</th><th class="px-3 py-3">交易 ID</th><th class="px-3 py-3">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-stone-200">
+          <% if (!rows.length) { %>
+            <tr><td class="px-3 py-8 text-center text-stone-500" colspan="10">沒有可顯示的紀錄。</td></tr>
+          <% } %>
+          <% rows.forEach((row) => { %>
+            <tr class="align-top hover:bg-stone-50">
+              <td class="whitespace-nowrap px-3 py-3 font-mono text-xs"><%= row.id %></td>
+              <td class="whitespace-nowrap px-3 py-3"><%= formatDate(row.date) %></td>
+              <td class="px-3 py-3 font-medium"><%= row.name %></td>
+              <td class="whitespace-nowrap px-3 py-3 font-bold"><%= row.currency %> <%= Number(row.amount).toLocaleString('zh-TW') %></td>
+              <td class="px-3 py-3"><%= row.campus || '—' %></td>
+              <td class="px-3 py-3"><%= row.paymenttype || '—' %></td>
+              <td class="px-3 py-3"><%= row.email || '—' %></td>
+              <td class="whitespace-nowrap px-3 py-3"><%= row.phone_number || '—' %></td>
+              <td class="px-3 py-3 font-mono text-xs"><%= row.tp_trade_id %></td>
+              <td class="px-3 py-3">
+                <form action="<%= publicPathPrefix %>/rows/<%= row.id %>/delete" method="post" onsubmit="return confirm('確定要永久刪除 ID <%= row.id %> 的捐款紀錄嗎？此操作無法復原。');">
+                  <input type="hidden" name="page" value="<%= page %>" />
+                  <button class="rounded bg-red-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-800" type="submit">刪除</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <nav class="mt-6 flex items-center justify-between gap-4" aria-label="Pagination">
+      <% if (page > 1) { %>
+        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?page=<%= page - 1 %>">上一頁</a>
+      <% } else { %><span></span><% } %>
+      <span class="text-sm font-medium text-stone-700">第 <%= page %> / <%= totalPages %> 頁</span>
+      <% if (page < totalPages) { %>
+        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?page=<%= page + 1 %>">下一頁</a>
+      <% } else { %><span></span><% } %>
+    </nav>
+  </main>
+</body>
+</html>

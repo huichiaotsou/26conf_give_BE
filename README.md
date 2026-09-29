@@ -62,6 +62,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `WORKERS` | Expected worker count (currently unused; code spawns 5 workers). |
 | `GOOGLE_SECRET` | Shared secret for `POST /api/getall`. |
 | `STATS_PASSWORD` | Single password for the `/stats` dashboard login page. |
+| `ADMIN_CODE` | Required administrator code for `/api/rows`; controls access to the giving-record list and deletion actions. |
 | `PGUSER` | PostgreSQL user. |
 | `PASSWORD` | PostgreSQL password. |
 | `HOST` | PostgreSQL host. |
@@ -86,6 +87,7 @@ REDIS_URL=redis://localhost:6379
 WORKERS=5
 GOOGLE_SECRET=super-secret
 STATS_PASSWORD=123456
+ADMIN_CODE=replace-with-a-long-admin-code
 PGUSER=postgres
 PASSWORD=postgres
 HOST=127.0.0.1
@@ -186,6 +188,9 @@ npm install
 - `GET /stats` (`/api/stats` externally when `PUBLIC_PATH_PREFIX=/api` and NGINX strips `/api`)
   - Auth: If no stats session exists, renders `views/stats-login.ejs` so the user can enter `STATS_PASSWORD`.
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
+- `GET /rows` (`/api/rows` externally when `PUBLIC_PATH_PREFIX=/api`)
+  - Auth: Requires a separate administrator session created with `POST /rows/login` and `ADMIN_CODE`.
+  - Behavior: Renders `views/rows.ejs`, showing production, successful giving records newest-first, 200 rows per page. Each row can be permanently deleted after a browser confirmation; `POST /rows/:id/delete` is administrator-only.
 - `POST /stats/login` (`/api/stats/login` externally when prefixed)
   - Body: form-encoded `{ password }`.
   - Behavior: Compares the submitted password with `STATS_PASSWORD`, stores `req.session.statsAuthenticated = true`, then redirects to `/stats`.

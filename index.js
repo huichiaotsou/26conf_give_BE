@@ -47,6 +47,10 @@ app.post("/getall", givingController.get);
 app.get("/stats", givingController.statsPage);
 app.post("/stats/login", givingController.statsLogin);
 app.post("/stats/logout", givingController.statsLogout);
+app.get("/rows", givingController.rowsPage);
+app.post("/rows/login", givingController.rowsLogin);
+app.post("/rows/logout", givingController.rowsLogout);
+app.post("/rows/:id/delete", givingController.deleteRow);
 app.post("/upload-siyuan", givingController.uploadSiyuan);
 
 app.listen(PORT, () => {

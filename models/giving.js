@@ -163,6 +163,42 @@ const givingModel = {
       throw e;
     }
   },
+  getPage: async (limit, offset) => {
+    try {
+      const [countResult, result] = await Promise.all([
+        pool.query(
+          "SELECT COUNT(*) AS total FROM confgive WHERE env = 'production' AND is_success = true"
+        ),
+        pool.query(
+          `SELECT * FROM confgive
+           WHERE env = 'production' AND is_success = true
+           ORDER BY id DESC
+           LIMIT $1 OFFSET $2`,
+          [limit, offset]
+        ),
+      ]);
+
+      return {
+        rows: result.rows,
+        total: Number(countResult.rows[0].total),
+      };
+    } catch (error) {
+      console.error("Error executing query in givingModel.getPage:", error);
+      throw error;
+    }
+  },
+  deleteById: async (id) => {
+    try {
+      const result = await pool.query(
+        "DELETE FROM confgive WHERE id = $1 AND env = 'production' AND is_success = true RETURNING id",
+        [id]
+      );
+      return result.rowCount === 1;
+    } catch (error) {
+      console.error("Error executing query in givingModel.deleteById:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = givingModel;
