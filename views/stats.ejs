@@ -128,6 +128,17 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 gap-8 mt-8">
+                    <div
+                        class="rounded-lg p-6 bg-[#f8f3ea] border border-ink/10 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                        <p class="text-lg font-black text-primary mb-1">Top 30 Givers</p>
+                        <p class="text-ink/60 text-sm font-normal mb-4">Ranked by total giving amount in 2026.</p>
+                        <div class="h-[48rem] w-full">
+                            <canvas id="topGiversChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Weekly Trend -->
                 <div class="grid grid-cols-1 gap-8 mt-8">
                     <div
@@ -256,12 +267,26 @@
         const makeWeekArray = () => Array.from({ length: maxWeeks }, () => 0);
         const weeklySum = makeWeekArray();
         const weeklyCount = makeWeekArray();
+        const giverTotals = new Map();
 
         const normalizePaymentMethod = (rawPaymentType) => {
             const normalized = String(rawPaymentType || '').toLowerCase().trim();
             if (normalized === 'apple_pay') return 'Apple Pay';
             if (normalized === 'google_pay') return 'Google Pay';
             return '信用卡';
+        };
+
+        const deriveGiverName = (item) => {
+            const candidates = [
+                item.receiptname,
+                item.receiptName,
+                item.name,
+                item.email,
+                item.phone_number,
+                item.phoneNumber
+            ];
+            const value = candidates.find(candidate => String(candidate || '').trim());
+            return value ? String(value).trim() : 'Unknown';
         };
 
         rawData.forEach(item => {
@@ -279,6 +304,12 @@
             const paymentMethod = normalizePaymentMethod(item.paymenttype || item.paymentType);
             paymentMethodCount[paymentMethod] += 1;
             paymentMethodAmount[paymentMethod] += amount;
+
+            const giverName = deriveGiverName(item);
+            const existingGiver = giverTotals.get(giverName) || { amount: 0, count: 0 };
+            existingGiver.amount += amount;
+            existingGiver.count += 1;
+            giverTotals.set(giverName, existingGiver);
 
             // Campus
             const campusValue = (item.campus || '').trim();
@@ -435,6 +466,64 @@
                                     const pct = ((value / total) * 100).toFixed(1);
                                     return `${context.label}: ${formatCurrency(value)} (${pct}%)`;
                                 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const topGiversChartEl = document.getElementById('topGiversChart');
+        if (topGiversChartEl) {
+            const topGivers = Array.from(giverTotals.entries())
+                .map(([name, stats]) => ({
+                    name,
+                    amount: stats.amount,
+                    count: stats.count
+                }))
+                .sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name))
+                .slice(0, 30);
+
+            new Chart(topGiversChartEl, {
+                type: 'bar',
+                data: {
+                    labels: topGivers.map(giver => giver.name),
+                    datasets: [
+                        {
+                            label: 'Total Amount',
+                            data: topGivers.map(giver => giver.amount),
+                            counts: topGivers.map(giver => giver.count),
+                            backgroundColor: '#0689c6',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const count = context.dataset.counts?.[context.dataIndex] || 0;
+                                    return `${formatCurrency(context.parsed.x || 0)} / ${count.toLocaleString()} gifts`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => formatCurrency(value)
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false
                             }
                         }
                     }
