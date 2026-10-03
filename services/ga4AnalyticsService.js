@@ -79,6 +79,48 @@ function parsePostEffect(response, donationEvent) {
   };
 }
 
+function parseGeography(visitsResponse, purchasesResponse) {
+  const geography = new Map();
+  const getRow = (countryCode, country) => {
+    if (!/^[A-Z]{2}$/.test(countryCode)) return null;
+    const existing = geography.get(countryCode) || {
+      countryCode,
+      country: country || countryCode,
+      activeUsers: 0,
+      sessions: 0,
+      givingCount: 0,
+      givingSum: 0,
+    };
+    if (country) existing.country = country;
+    geography.set(countryCode, existing);
+    return existing;
+  };
+
+  for (const row of visitsResponse.rows || []) {
+    const entry = getRow(
+      String(row.dimensionValues?.[0]?.value || "").toUpperCase(),
+      row.dimensionValues?.[1]?.value
+    );
+    if (!entry) continue;
+    entry.activeUsers = Number(valueAt(row, 0));
+    entry.sessions = Number(valueAt(row, 1));
+  }
+
+  for (const row of purchasesResponse.rows || []) {
+    const entry = getRow(
+      String(row.dimensionValues?.[0]?.value || "").toUpperCase(),
+      row.dimensionValues?.[1]?.value
+    );
+    if (!entry) continue;
+    entry.givingCount = Number(valueAt(row, 0));
+    entry.givingSum = Number(valueAt(row, 1));
+  }
+
+  return Array.from(geography.values()).sort(
+    (a, b) => b.givingSum - a.givingSum || b.activeUsers - a.activeUsers
+  );
+}
+
 async function getReport({ startDate, endDate }) {
   const configuration = getConfiguration();
   if (!configuration) {
@@ -88,6 +130,7 @@ async function getReport({ startDate, endDate }) {
       summary: null,
       daily: [],
       postEffect: null,
+      geography: [],
     };
   }
 
@@ -111,7 +154,7 @@ async function getReport({ startDate, endDate }) {
     ],
   };
 
-  const [summaryResponse, dailyResponse, postEffectResponse] = await Promise.all([
+  const [summaryResponse, dailyResponse, postEffectResponse, visitsByCountryResponse, purchasesByCountryResponse] = await Promise.all([
     client.runReport(requestBase),
     client.runReport({
       ...requestBase,
@@ -134,6 +177,31 @@ async function getReport({ startDate, endDate }) {
       },
       orderBys: [{ dimension: { dimensionName: "date" } }],
     }),
+    client.runReport({
+      property: requestBase.property,
+      dateRanges: requestBase.dateRanges,
+      dimensions: [{ name: "countryId" }, { name: "country" }],
+      metrics: [{ name: "activeUsers" }, { name: "sessions" }],
+      orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+      limit: 250,
+    }),
+    client.runReport({
+      property: requestBase.property,
+      dateRanges: requestBase.dateRanges,
+      dimensions: [{ name: "countryId" }, { name: "country" }],
+      metrics: [{ name: "eventCount" }, { name: "eventValue" }],
+      dimensionFilter: {
+        filter: {
+          fieldName: "eventName",
+          stringFilter: {
+            matchType: "EXACT",
+            value: configuration.donationEvent,
+          },
+        },
+      },
+      orderBys: [{ metric: { metricName: "eventValue" }, desc: true }],
+      limit: 250,
+    }),
   ]);
 
   const value = {
@@ -142,6 +210,7 @@ async function getReport({ startDate, endDate }) {
     summary: parseSummary(summaryResponse[0]),
     daily: parseDaily(dailyResponse[0]),
     postEffect: parsePostEffect(postEffectResponse[0], configuration.donationEvent),
+    geography: parseGeography(visitsByCountryResponse[0], purchasesByCountryResponse[0]),
   };
   reportCache.set(cacheKey, { createdAt: Date.now(), value });
   return value;

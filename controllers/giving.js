@@ -419,6 +419,7 @@ const givingController = {
         summary: null,
         daily: [],
         postEffect: null,
+        geography: [],
       };
       if (selectedEvent) {
         try {

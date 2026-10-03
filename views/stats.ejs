@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -257,6 +258,24 @@
                             <p class="mb-4 text-sm text-ink/60">Days from first recorded GA4 visit to the <code class="rounded bg-ink/5 px-1"><%= ga4.postEffect?.donationEvent || 'purchase' %></code> event. This counts donation events, not deduplicated people.</p>
                             <div class="h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
                         </div>
+                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="mb-1 text-lg font-black text-accent">Giving Geography</p>
+                                    <p class="text-sm text-ink/60">Aggregated by country from GA4. Locations are approximate and never identify individual people.</p>
+                                </div>
+                                <div class="flex flex-wrap gap-2" role="group" aria-label="Geography metric">
+                                    <button type="button" data-geo-metric="activeUsers" class="geo-metric-button rounded-md bg-accent px-3 py-2 text-sm font-bold text-white">Visits</button>
+                                    <button type="button" data-geo-metric="givingCount" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving counts</button>
+                                    <button type="button" data-geo-metric="givingSum" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving sum</button>
+                                </div>
+                            </div>
+                            <% if (!ga4.geography?.length) { %>
+                                <p class="mt-5 rounded-md bg-ink/5 px-4 py-3 text-sm text-ink/70">No country-level GA4 data is available for this event date range.</p>
+                            <% } else { %>
+                                <div id="ga4GeoChart" class="mt-5 h-[30rem] w-full" aria-label="Geographic visits and giving map"></div>
+                            <% } %>
+                        </div>
                     <% } %>
                 </section>
             </div>
@@ -502,6 +521,65 @@
                         plugins: { legend: { display: false }, datalabels: { display: false } },
                         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
                     }
+                });
+            }
+
+            const geoChartEl = document.getElementById('ga4GeoChart');
+            if (geoChartEl && Array.isArray(ga4.geography) && ga4.geography.length && window.google?.charts) {
+                let selectedGeoMetric = 'activeUsers';
+                const geoMetricConfig = {
+                    activeUsers: { label: 'Visits', value: row => Number(row.activeUsers || 0) },
+                    givingCount: { label: 'Giving counts', value: row => Number(row.givingCount || 0) },
+                    givingSum: { label: 'Giving sum', value: row => Number(row.givingSum || 0) }
+                };
+                const formatGeoValue = (metric, value) => metric === 'givingSum'
+                    ? formatCurrency(value)
+                    : Number(value || 0).toLocaleString();
+
+                const drawGeoChart = () => {
+                    const metric = geoMetricConfig[selectedGeoMetric];
+                    const data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Country');
+                    data.addColumn('number', metric.label);
+                    data.addColumn({ type: 'string', role: 'tooltip' });
+                    data.addRows(ga4.geography.map(row => {
+                        const value = metric.value(row);
+                        const tooltip = [
+                            row.country,
+                            `Visits: ${Number(row.activeUsers || 0).toLocaleString()}`,
+                            `Giving counts: ${Number(row.givingCount || 0).toLocaleString()}`,
+                            `Giving sum: ${formatCurrency(row.givingSum || 0)}`
+                        ].join('\n');
+                        return [row.countryCode, value, tooltip];
+                    }));
+                    new google.visualization.GeoChart(geoChartEl).draw(data, {
+                        region: 'world',
+                        resolution: 'countries',
+                        displayMode: 'regions',
+                        backgroundColor: '#f8f3ea',
+                        datalessRegionColor: '#ede6da',
+                        defaultColor: '#ede6da',
+                        colorAxis: { colors: ['#d6effa', '#0689c6'] },
+                        legend: { textStyle: { color: '#000007' } },
+                        tooltip: { textStyle: { color: '#000007', fontName: 'Inter' } }
+                    });
+                };
+
+                google.charts.load('current', { packages: ['geochart'] });
+                google.charts.setOnLoadCallback(drawGeoChart);
+                document.querySelectorAll('.geo-metric-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        selectedGeoMetric = button.dataset.geoMetric;
+                        document.querySelectorAll('.geo-metric-button').forEach(item => {
+                            const isSelected = item === button;
+                            item.classList.toggle('bg-accent', isSelected);
+                            item.classList.toggle('text-white', isSelected);
+                            item.classList.toggle('border', !isSelected);
+                            item.classList.toggle('border-ink/20', !isSelected);
+                            item.classList.toggle('text-ink', !isSelected);
+                        });
+                        drawGeoChart();
+                    });
                 });
             }
         }
