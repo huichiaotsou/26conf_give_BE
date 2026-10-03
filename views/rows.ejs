@@ -12,8 +12,8 @@
     <header class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p class="text-sm font-bold uppercase tracking-wider text-orange-700">Giving administration</p>
-        <h1 class="mt-1 text-3xl font-black">歷史捐款紀錄</h1>
-        <p class="mt-2 text-sm text-stone-600">共 <%= total %> 筆；每頁 <%= pageSize %> 筆。僅列出正式環境的成功捐款。</p>
+        <h1 class="mt-1 text-3xl font-black">歷史奉獻紀錄</h1>
+        <p class="mt-2 text-sm text-stone-600">共 <%= total %> 筆；每頁 <%= pageSize %> 筆。僅列出正式環境的成功奉獻。</p>
       </div>
       <form action="<%= publicPathPrefix %>/rows/logout" method="post">
         <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-bold hover:bg-stone-50" type="submit">登出管理員</button>
@@ -45,7 +45,7 @@
               <td class="whitespace-nowrap px-3 py-3"><%= row.phone_number || '—' %></td>
               <td class="px-3 py-3 font-mono text-xs"><%= row.tp_trade_id %></td>
               <td class="px-3 py-3">
-                <form action="<%= publicPathPrefix %>/rows/<%= row.id %>/delete" method="post" onsubmit="return confirm('確定要永久刪除 ID <%= row.id %> 的捐款紀錄嗎？此操作無法復原。');">
+                <form action="<%= publicPathPrefix %>/rows/<%= row.id %>/delete" method="post" onsubmit="return confirm('確定要永久刪除 ID <%= row.id %> 的奉獻紀錄嗎？此操作無法復原。');">
                   <input type="hidden" name="page" value="<%= page %>" />
                   <button class="rounded bg-red-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-800" type="submit">刪除</button>
                 </form>
