@@ -1,6 +1,6 @@
 # 25fwd_BE / givingtest
 
-Express backend that accepts donation submissions, charges them through TapPay, and persists successful payments into PostgreSQL via a BullMQ worker pool. Use this document as the single place to recall how the pieces fit together when you need to change the service later.
+Express backend that accepts Giving submissions, charges them through TapPay, and persists successful payments into PostgreSQL via a BullMQ worker pool. Use this document as the single place to recall how the pieces fit together when you need to change the service later.
 
 Keep in mind that this repo intentionally stays small—there is no ORM, no migration system, and the queue/worker live in the same Node process. That simplicity makes it easy to reason about, but it also means you must remember the manual steps (Redis, Postgres schema, env vars) whenever you pick it up again.
 
@@ -15,7 +15,7 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 1. Frontend sends `{ prime, amount, cardholder }` to `POST /payment` (`/api/payment` once the NGINX prefix is added).
 2. Controller builds TapPay request: partner key, merchant ID, amount, currency, and combines `phoneCode` + `phone_number` for the `details` string.
 3. TapPay response is returned immediately to the client. Only records with `status === 0` are persisted.
-4. Successful responses yield a job containing the structured donation record (now including `campus`) plus `rec_trade_id`, `is_success`, and the detected environment (`sandbox` when the TapPay API URL contains `sandbox`, otherwise `production`). BullMQ workers consume the job and call `givingModel.add`, which inserts into `confgive`.
+4. Successful responses yield a job containing the structured Giving record (now including `campus`) plus `rec_trade_id`, `is_success`, and the detected environment (`sandbox` when the TapPay API URL contains `sandbox`, otherwise `production`). BullMQ workers consume the job and call `givingModel.add`, which inserts into `confgive`.
 5. External systems poll `POST /getall` with `{ googleSecret, lastRowID }`. When the secret matches `GOOGLE_SECRET`, the API streams every row with `id > lastRowID`, `env = 'production'`, and `amount > 1`.
 
 ### Queue/worker specifics
@@ -74,7 +74,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `GIVING_REPORT_URL` | Optional – CTA link used by the giving email. Defaults to `https://thehope.co/25report`. |
 | `GA4_PROPERTY_ID` | Numeric GA4 Property ID used by `/stats` (for this dashboard: `557071037`). |
 | `GA4_SERVICE_ACCOUNT_JSON` | Complete one-line JSON key for the service account that has Viewer access to that GA4 Property. Keep it only in the deployment secret store; never commit it. |
-| `GA4_DONATION_EVENT` | GA4 event sent after a successful donation, used for the first-visit-to-donation report. The existing frontend emits `purchase`; this is the default. |
+| `GA4_GIVING_EVENT` | GA4 event sent after successful Giving, used for the first-visit-to-Giving report. The existing frontend emits `purchase`; this is the default. |
 
 Example template:
 ```env
@@ -135,7 +135,7 @@ docker compose up --build
 ```
 
 `compose.yaml` passes `GA4_PROPERTY_ID`, `GA4_SERVICE_ACCOUNT_JSON`, and
-`GA4_DONATION_EVENT` from the project-root `.env` into the `api` container.
+`GA4_GIVING_EVENT` from the project-root `.env` into the `api` container.
 After changing any of these values, recreate the API container with
 `docker compose up -d --build api`; merely restarting the Node process does not
 add new container environment variables.
@@ -187,7 +187,7 @@ npm install
 
 ## Endpoints you can call
 - `POST /payment`
-  - Body: `{ prime, amount, cardholder }`, where `cardholder` includes `phoneCode`, `phone_number`, `name`, `email`, optional receipt metadata, and the new `campus` key that identifies which campus initiated the donation.
+  - Body: `{ prime, amount, cardholder }`, where `cardholder` includes `phoneCode`, `phone_number`, `name`, `email`, optional receipt metadata, and the new `campus` key that identifies which campus initiated the Giving.
   - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. The email service also triggers here (best-effort) to send an HTML receipt via Gmail. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
 - `POST /getall`
   - Body: `{ googleSecret, lastRowID }`.
@@ -195,7 +195,7 @@ npm install
 - `POST /upload-siyuan`
   - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
   - Auth: Requires the same logged-in stats session as `/stats`.
-  - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
+  - Behavior: Parses Siyuan Giving records (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
 - `GET /stats` (`/api/stats` externally when `PUBLIC_PATH_PREFIX=/api` and NGINX strips `/api`)
   - Auth: If no stats session exists, renders `views/stats-login.ejs` so the user can enter `STATS_PASSWORD`.
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. The selected event (or the one with the latest end date by default) filters all dashboard metrics; its dates are dynamically split into weekly trend periods.
@@ -216,7 +216,7 @@ npm install
   - Behavior: Clears the stats session flag and redirects to `/stats`.
 
 ### Siyuan CSV import rules
-- Columns expected (A → I): ignore donation sequence, `siyuan_id` (B), ignore C and E, campus (D), amount (F), order time (G), payment method (H), note (I).
+- Columns expected (A → I): ignore Giving sequence, `siyuan_id` (B), ignore C and E, campus (D), amount (F), order time (G), payment method (H), note (I).
 - `siyuan_id` must be present (text); duplicates inside the same upload are rejected.
 - Campus normalization: `台北分部 Taipei Campus` → `台北分部`; `台中分部 Taichung Campus` → `台中分部`; `線上分部 Online Campus (Hope Nation)` → `線上分部`; everything else → `其他`.
 - Rows with notes containing “Tappay” (case-insensitive) are dropped.

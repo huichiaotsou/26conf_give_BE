@@ -58,7 +58,7 @@ function getCityCoordinates(countryCode, city, region) {
 function getConfiguration() {
   const propertyId = String(process.env.GA4_PROPERTY_ID || "").trim();
   const rawCredentials = String(process.env.GA4_SERVICE_ACCOUNT_JSON || "").trim();
-  const donationEvent = String(process.env.GA4_DONATION_EVENT || "purchase").trim();
+  const givingEvent = String(process.env.GA4_GIVING_EVENT || "purchase").trim();
 
   if (!propertyId || !rawCredentials) {
     return null;
@@ -75,7 +75,7 @@ function getConfiguration() {
     throw new Error("GA4_SERVICE_ACCOUNT_JSON must be valid JSON.");
   }
 
-  return { propertyId, credentials, donationEvent };
+  return { propertyId, credentials, givingEvent };
 }
 
 function valueAt(row, index) {
@@ -108,26 +108,26 @@ function parseDaily(response) {
   }));
 }
 
-function parsePostEffect(response, donationEvent) {
+function parsePostEffect(response, givingEvent) {
   return {
-    donationEvent,
+    givingEvent,
     rows: (response.rows || [])
       .map((row) => {
-        const donationDate = ga4DateToIso(row.dimensionValues?.[0]?.value);
+        const givingDate = ga4DateToIso(row.dimensionValues?.[0]?.value);
         const firstSessionDate = ga4DateToIso(row.dimensionValues?.[1]?.value);
-        const daysToDonation = Math.round(
-          (Date.parse(`${donationDate}T00:00:00Z`) -
+        const daysToGiving = Math.round(
+          (Date.parse(`${givingDate}T00:00:00Z`) -
             Date.parse(`${firstSessionDate}T00:00:00Z`)) /
             (24 * 60 * 60 * 1000)
         );
         return {
-          donationDate,
+          givingDate,
           firstSessionDate,
-          daysToDonation,
-          donationEvents: Number(valueAt(row, 0)),
+          daysToGiving,
+          givingEvents: Number(valueAt(row, 0)),
         };
       })
-      .filter((row) => Number.isFinite(row.daysToDonation) && row.daysToDonation >= 0),
+      .filter((row) => Number.isFinite(row.daysToGiving) && row.daysToGiving >= 0),
   };
 }
 
@@ -276,7 +276,7 @@ async function getReport({ startDate, endDate }) {
           fieldName: "eventName",
           stringFilter: {
             matchType: "EXACT",
-            value: configuration.donationEvent,
+            value: configuration.givingEvent,
           },
         },
       },
@@ -300,7 +300,7 @@ async function getReport({ startDate, endDate }) {
           fieldName: "eventName",
           stringFilter: {
             matchType: "EXACT",
-            value: configuration.donationEvent,
+            value: configuration.givingEvent,
           },
         },
       },
@@ -325,7 +325,7 @@ async function getReport({ startDate, endDate }) {
           fieldName: "eventName",
           stringFilter: {
             matchType: "EXACT",
-            value: configuration.donationEvent,
+            value: configuration.givingEvent,
           },
         },
       },
@@ -339,7 +339,7 @@ async function getReport({ startDate, endDate }) {
     message: null,
     summary: parseSummary(summaryResponse[0]),
     daily: parseDaily(dailyResponse[0]),
-    postEffect: parsePostEffect(postEffectResponse[0], configuration.donationEvent),
+    postEffect: parsePostEffect(postEffectResponse[0], configuration.givingEvent),
     geography: parseGeography(visitsByCountryResponse[0], purchasesByCountryResponse[0]),
     cities: parseCityGeography(visitsByCityResponse[0], purchasesByCityResponse[0]),
   };

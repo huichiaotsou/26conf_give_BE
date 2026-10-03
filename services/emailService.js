@@ -173,9 +173,9 @@ async function sendGivingSuccessEmail({
   try {
     const transporter = getTransporter();
     await transporter.sendMail(mailOptions);
-    console.log(`[emailService] Donation email sent to ${recipient}`);
+    console.log(`[emailService] Giving email sent to ${recipient}`);
   } catch (error) {
-    console.error("[emailService] Failed to send donation email", error);
+    console.error("[emailService] Failed to send Giving email", error);
   }
 }
 

@@ -56,7 +56,7 @@ services:
       GIVING_REPORT_URL: ${GIVING_REPORT_URL:-https://thehope.co/25report}
       GA4_PROPERTY_ID: ${GA4_PROPERTY_ID:-}
       GA4_SERVICE_ACCOUNT_JSON: ${GA4_SERVICE_ACCOUNT_JSON:-}
-      GA4_DONATION_EVENT: ${GA4_DONATION_EVENT:-purchase}
+      GA4_GIVING_EVENT: ${GA4_GIVING_EVENT:-purchase}
     ports:
       - "${PORT:-3000}:3000"
 

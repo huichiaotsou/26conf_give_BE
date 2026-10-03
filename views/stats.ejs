@@ -258,9 +258,8 @@
                             <div class="h-80 w-full"><canvas id="ga4DailyTrendChart"></canvas></div>
                         </div>
                         <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                            <p class="mb-1 text-lg font-black text-accent">First Visit → Donation</p>
-                            <p class="mb-4 text-sm text-ink/60">Days from first recorded GA4 visit to the <code class="rounded bg-ink/5 px-1"><%= ga4.postEffect?.donationEvent || 'purchase' %></code> event. This counts donation events, not deduplicated people.</p>
-                            <div class="h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
+                            <p class="mb-1 text-lg font-black text-accent">First Visit → Giving</p>
+                            <div class="mt-4 h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
                         </div>
                         <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -464,11 +463,11 @@
             weeklyCount[weekIndex] += 1;
 
             // Past 7 days (Taipei)
-            const donationDateMs = parseDbDateToUTC(item.date);
-            if (donationDateMs !== null && todayTaipeiMs !== null) {
-                const dayDiff = Math.round((todayTaipeiMs - donationDateMs) / DAY_MS);
+            const givingDateMs = parseDbDateToUTC(item.date);
+            if (givingDateMs !== null && todayTaipeiMs !== null) {
+                const dayDiff = Math.round((todayTaipeiMs - givingDateMs) / DAY_MS);
                 if (dayDiff >= 0 && dayDiff < 7) {
-                    const label = taipeiDateFormatter.format(new Date(donationDateMs));
+                    const label = taipeiDateFormatter.format(new Date(givingDateMs));
                     pastSevenSums[label] = (pastSevenSums[label] || 0) + amount;
                 }
             }
@@ -526,13 +525,13 @@
                     { label: '31+ days', test: days => days >= 31 }
                 ];
                 const bucketValues = bucketDefinitions.map(bucket => (ga4.postEffect.rows || [])
-                    .filter(row => bucket.test(row.daysToDonation))
-                    .reduce((total, row) => total + Number(row.donationEvents || 0), 0));
+                    .filter(row => bucket.test(row.daysToGiving))
+                    .reduce((total, row) => total + Number(row.givingEvents || 0), 0));
                 new Chart(postEffectChartEl, {
                     type: 'bar',
                     data: {
                         labels: bucketDefinitions.map(bucket => bucket.label),
-                        datasets: [{ label: 'Donation Events', data: bucketValues, backgroundColor: '#0689c6', borderRadius: 4 }]
+                        datasets: [{ label: 'Giving Events', data: bucketValues, backgroundColor: '#0689c6', borderRadius: 4 }]
                     },
                     options: {
                         responsive: true,
