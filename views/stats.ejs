@@ -266,13 +266,16 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <p class="mb-1 text-lg font-black text-accent">Giving Geography</p>
-                                    <p class="text-sm text-ink/60">Aggregated by country from GA4. Locations are approximate and never identify individual people. City-centre coordinates: GeoNames via cities.json (CC BY 4.0).</p>
+                                    <p class="text-sm text-ink/60">Country and city-level visits and giving activity for the selected event.</p>
                                 </div>
-                                <div class="flex flex-wrap gap-2" role="group" aria-label="Geography metric">
-                                    <button type="button" data-geo-metric="activeUsers" class="geo-metric-button rounded-md bg-accent px-3 py-2 text-sm font-bold text-white">Visits</button>
-                                    <button type="button" data-geo-metric="givingCount" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving counts</button>
-                                    <button type="button" data-geo-metric="givingSum" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving sum</button>
-                                    <button id="ga4GeoBackButton" type="button" class="hidden rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Back to world</button>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="ga4GeoMetric" class="text-sm font-bold text-ink/70">Bubbled By:</label>
+                                    <select id="ga4GeoMetric" class="rounded-md border-ink/20 bg-white px-3 py-2 text-sm font-bold text-ink focus:border-accent focus:ring-accent">
+                                        <option value="activeUsers">Visits</option>
+                                        <option value="givingCount">Giving counts</option>
+                                        <option value="givingSum">Giving sum</option>
+                                    </select>
+                                    <button id="ga4GeoBackButton" type="button" class="hidden rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">View Whole World</button>
                                 </div>
                             </div>
                             <% if (!ga4.geography?.length) { %>
@@ -650,19 +653,9 @@
                 };
 
                 drawGeoMap();
-                document.querySelectorAll('.geo-metric-button').forEach(button => {
-                    button.addEventListener('click', () => {
-                        selectedGeoMetric = button.dataset.geoMetric;
-                        document.querySelectorAll('.geo-metric-button').forEach(item => {
-                            const isSelected = item === button;
-                            item.classList.toggle('bg-accent', isSelected);
-                            item.classList.toggle('text-white', isSelected);
-                            item.classList.toggle('border', !isSelected);
-                            item.classList.toggle('border-ink/20', !isSelected);
-                            item.classList.toggle('text-ink', !isSelected);
-                        });
-                        drawGeoMap();
-                    });
+                document.getElementById('ga4GeoMetric')?.addEventListener('change', event => {
+                    selectedGeoMetric = event.target.value;
+                    drawGeoMap();
                 });
                 document.getElementById('ga4GeoBackButton')?.addEventListener('click', () => {
                     selectedGeoCountry = null;
