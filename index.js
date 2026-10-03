@@ -42,7 +42,6 @@ app.use((req, res, next) => {
 });
 
 // NGINX 處理 /api/ 這段，所以實際上的 end point 是 /api/payment
-app.get("/campus-suggestion", givingController.campusSuggestion);
 app.post("/payment", givingController.giving);
 app.post("/getall", givingController.get);
 app.get("/stats", givingController.statsPage);
