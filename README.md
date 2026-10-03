@@ -134,6 +134,12 @@ If you want the whole stack locally without installing Postgres/Redis on your ma
 docker compose up --build
 ```
 
+`compose.yaml` passes `GA4_PROPERTY_ID`, `GA4_SERVICE_ACCOUNT_JSON`, and
+`GA4_DONATION_EVENT` from the project-root `.env` into the `api` container.
+After changing any of these values, recreate the API container with
+`docker compose up -d --build api`; merely restarting the Node process does not
+add new container environment variables.
+
 That starts:
 - `api` on `http://localhost:3000`
 - `postgres` and `redis` inside the Compose network for the API container
