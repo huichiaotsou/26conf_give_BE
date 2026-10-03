@@ -218,6 +218,29 @@ function passwordsMatch(candidate, expected) {
   return crypto.timingSafeEqual(candidateBuffer, expectedBuffer);
 }
 
+function getClientIp(req) {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  const firstForwardedIp = Array.isArray(forwardedFor)
+    ? forwardedFor[0]
+    : String(forwardedFor || "").split(",")[0];
+  const ip = String(req.headers["cf-connecting-ip"] || firstForwardedIp || req.socket.remoteAddress || "").trim();
+
+  if (!ip || ip === "::1" || ip === "127.0.0.1") return null;
+  return ip.startsWith("::ffff:") ? ip.slice(7) : ip;
+}
+
+function campusFromLocation(location) {
+  const cityAndRegion = `${location.city || ""} ${location.region || ""}`.toLowerCase();
+  const isTaipeiMetroArea = location.countryCode === "TW" && (
+    cityAndRegion.includes("taipei") ||
+    cityAndRegion.includes("new taipei") ||
+    cityAndRegion.includes("台北") ||
+    cityAndRegion.includes("新北")
+  );
+
+  return isTaipeiMetroArea ? "台北分部" : "線上分部";
+}
+
 // Worker processing function (shared by all workers)
 const paymentWorkerProcessor = async (job) => {
   const { givingData } = job.data; // Destructure jobId
@@ -278,6 +301,31 @@ for (let i = 0; i < numberOfWorkers; i++) {
 }
 
 const givingController = {
+  campusSuggestion: async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const ip = getClientIp(req);
+    if (!ip) return res.json({ campus: null });
+
+    try {
+      const response = await axios.get(`https://ipwho.is/${encodeURIComponent(ip)}`, {
+        params: { fields: "success,country_code,region,city" },
+        timeout: 1500,
+      });
+      const location = response.data || {};
+      if (!location.success) return res.json({ campus: null });
+
+      return res.json({
+        campus: campusFromLocation({
+          countryCode: location.country_code,
+          region: location.region,
+          city: location.city,
+        }),
+      });
+    } catch (error) {
+      // Location is only a convenience default. Never block Giving when it is unavailable.
+      return res.json({ campus: null });
+    }
+  },
   giving: async (req, res, next) => {
     const { prime, amount, cardholder } = req.body;
     const { phoneCode, phone_number } = cardholder;
