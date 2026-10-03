@@ -11,7 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -262,12 +266,13 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <p class="mb-1 text-lg font-black text-accent">Giving Geography</p>
-                                    <p class="text-sm text-ink/60">Aggregated by country from GA4. Locations are approximate and never identify individual people.</p>
+                                    <p class="text-sm text-ink/60">Aggregated by country from GA4. Locations are approximate and never identify individual people. City-centre coordinates: GeoNames via cities.json (CC BY 4.0).</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2" role="group" aria-label="Geography metric">
                                     <button type="button" data-geo-metric="activeUsers" class="geo-metric-button rounded-md bg-accent px-3 py-2 text-sm font-bold text-white">Visits</button>
                                     <button type="button" data-geo-metric="givingCount" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving counts</button>
                                     <button type="button" data-geo-metric="givingSum" class="geo-metric-button rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Giving sum</button>
+                                    <button id="ga4GeoBackButton" type="button" class="hidden rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Back to world</button>
                                 </div>
                             </div>
                             <% if (!ga4.geography?.length) { %>
@@ -277,7 +282,6 @@
                                 <section id="ga4CityStats" class="mt-5 hidden border-t border-ink/10 pt-5" aria-live="polite">
                                     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                                         <p id="ga4CityStatsTitle" class="text-base font-black text-accent"></p>
-                                        <button id="ga4GeoBackButton" type="button" class="rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Back to world</button>
                                     </div>
                                     <div class="overflow-x-auto rounded-md border border-ink/10">
                                         <table class="w-full text-left text-sm">
@@ -537,55 +541,71 @@
             }
 
             const geoChartEl = document.getElementById('ga4GeoChart');
-            if (geoChartEl && Array.isArray(ga4.geography) && ga4.geography.length && window.google?.charts) {
+            if (geoChartEl && Array.isArray(ga4.geography) && ga4.geography.length && window.L?.markerClusterGroup) {
                 let selectedGeoMetric = 'activeUsers';
                 let selectedGeoCountry = null;
-                let geoChartsLoaded = false;
+                const geoMap = L.map(geoChartEl, { scrollWheelZoom: false }).setView([20, 0], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(geoMap);
                 const geoMetricConfig = {
                     activeUsers: { label: 'Visits', value: row => Number(row.activeUsers || 0) },
                     givingCount: { label: 'Giving counts', value: row => Number(row.givingCount || 0) },
                     givingSum: { label: 'Giving sum', value: row => Number(row.givingSum || 0) }
                 };
-                const formatGeoValue = (metric, value) => metric === 'givingSum'
-                    ? formatCurrency(value)
-                    : Number(value || 0).toLocaleString();
+                let geoMarkerLayer = null;
+                const escapeHtml = value => String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+                const markerPopup = row => [
+                    `<strong>${escapeHtml(row.city || row.country)}</strong>`,
+                    `Visits: ${Number(row.activeUsers || 0).toLocaleString()}`,
+                    `Sessions: ${Number(row.sessions || 0).toLocaleString()}`,
+                    `Giving counts: ${Number(row.givingCount || 0).toLocaleString()}`,
+                    `Giving sum: ${formatCurrency(row.givingSum || 0)}`
+                ].join('<br>');
+                const metricRadius = (value, maxValue) => {
+                    if (!maxValue || value <= 0) return 10;
+                    return 10 + Math.sqrt(value / maxValue) * 26;
+                };
 
-                const drawGeoChart = () => {
+                const drawGeoMap = () => {
                     const metric = geoMetricConfig[selectedGeoMetric];
-                    const data = new google.visualization.DataTable();
-                    data.addColumn('string', 'Country');
-                    data.addColumn('number', metric.label);
-                    data.addColumn({ type: 'string', role: 'tooltip' });
-                    data.addRows(ga4.geography.map(row => {
-                        const value = metric.value(row);
-                        const tooltip = [
-                            row.country,
-                            `Visits: ${Number(row.activeUsers || 0).toLocaleString()}`,
-                            `Giving counts: ${Number(row.givingCount || 0).toLocaleString()}`,
-                            `Giving sum: ${formatCurrency(row.givingSum || 0)}`
-                        ].join('\n');
-                        return [row.countryCode, value, tooltip];
-                    }));
-                    const chart = new google.visualization.GeoChart(geoChartEl);
-                    google.visualization.events.addListener(chart, 'regionClick', event => {
-                        const countryCode = String(event.region || '').toUpperCase();
-                        if (ga4.geography?.some(country => country.countryCode === countryCode)) {
-                            selectedGeoCountry = countryCode;
-                            drawGeoChart();
-                            renderCityStats();
+                    const rows = (selectedGeoCountry
+                        ? (ga4.cities || []).filter(city => city.countryCode === selectedGeoCountry)
+                        : ga4.geography
+                    ).filter(row => row.coordinates);
+                    if (geoMarkerLayer) geoMap.removeLayer(geoMarkerLayer);
+                    geoMarkerLayer = L.markerClusterGroup({ maxClusterRadius: 50, showCoverageOnHover: false });
+                    const maxValue = Math.max(...rows.map(metric.value), 0);
+                    rows.forEach(row => {
+                        const radius = metricRadius(metric.value(row), maxValue);
+                        const diameter = radius * 2;
+                        const marker = L.marker([row.coordinates.latitude, row.coordinates.longitude], {
+                            icon: L.divIcon({
+                                className: 'ga4-geo-bubble',
+                                html: `<span style="display:block;width:${diameter}px;height:${diameter}px;border:2px solid #035f8c;border-radius:9999px;background:rgba(6,137,198,.72)"></span>`,
+                                iconSize: [diameter, diameter],
+                                iconAnchor: [radius, radius]
+                            })
+                        }).bindPopup(markerPopup(row));
+                        if (!selectedGeoCountry) {
+                            marker.on('click', () => {
+                                selectedGeoCountry = row.countryCode;
+                                drawGeoMap();
+                                renderCityStats();
+                                document.getElementById('ga4GeoBackButton')?.classList.remove('hidden');
+                            });
                         }
+                        geoMarkerLayer.addLayer(marker);
                     });
-                    chart.draw(data, {
-                        region: selectedGeoCountry || 'world',
-                        resolution: 'countries',
-                        displayMode: 'regions',
-                        backgroundColor: '#f8f3ea',
-                        datalessRegionColor: '#ede6da',
-                        defaultColor: '#ede6da',
-                        colorAxis: { colors: ['#d6effa', '#0689c6'] },
-                        legend: { textStyle: { color: '#000007' } },
-                        tooltip: { textStyle: { color: '#000007', fontName: 'Inter' } }
-                    });
+                    geoMarkerLayer.addTo(geoMap);
+                    if (selectedGeoCountry && rows.length) {
+                        const bounds = L.latLngBounds(rows.map(row => [row.coordinates.latitude, row.coordinates.longitude]));
+                        if (rows.length === 1) geoMap.setView(bounds.getCenter(), 10);
+                        else geoMap.fitBounds(bounds.pad(0.35), { maxZoom: 10 });
+                    } else if (!selectedGeoCountry) {
+                        geoMap.setView([20, 0], 2);
+                    }
                 };
 
                 const cityStatsEl = document.getElementById('ga4CityStats');
@@ -629,11 +649,7 @@
                     cityStatsEl.classList.remove('hidden');
                 };
 
-                google.charts.load('current', { packages: ['geochart'] });
-                google.charts.setOnLoadCallback(() => {
-                    geoChartsLoaded = true;
-                    drawGeoChart();
-                });
+                drawGeoMap();
                 document.querySelectorAll('.geo-metric-button').forEach(button => {
                     button.addEventListener('click', () => {
                         selectedGeoMetric = button.dataset.geoMetric;
@@ -645,13 +661,14 @@
                             item.classList.toggle('border-ink/20', !isSelected);
                             item.classList.toggle('text-ink', !isSelected);
                         });
-                        if (geoChartsLoaded) drawGeoChart();
+                        drawGeoMap();
                     });
                 });
                 document.getElementById('ga4GeoBackButton')?.addEventListener('click', () => {
                     selectedGeoCountry = null;
                     cityStatsEl?.classList.add('hidden');
-                    if (geoChartsLoaded) drawGeoChart();
+                    document.getElementById('ga4GeoBackButton')?.classList.add('hidden');
+                    drawGeoMap();
                 });
             }
         }
