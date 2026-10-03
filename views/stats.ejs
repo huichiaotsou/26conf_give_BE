@@ -124,36 +124,6 @@
                 </dialog>
                 <% if (eventError) { %><script>document.getElementById('event-settings-dialog').showModal();</script><% } %>
 
-                <!-- GA4 Summary -->
-                <section class="mb-8" aria-labelledby="ga4-heading">
-                    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <p id="ga4-heading" class="text-2xl font-black text-primary">GA4 Website Performance</p>
-                            <p class="text-sm text-ink/60">Uses the selected event date range.</p>
-                        </div>
-                    </div>
-                    <% if (!ga4.available) { %>
-                        <div class="rounded-lg border border-amber-600/30 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"><%= ga4.message %></div>
-                    <% } else { %>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Active Users</p><p id="ga4-active-users" class="mt-2 text-3xl font-black">0</p></div>
-                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">New Users</p><p id="ga4-new-users" class="mt-2 text-3xl font-black">0</p></div>
-                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Sessions</p><p id="ga4-sessions" class="mt-2 text-3xl font-black">0</p></div>
-                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Page Views</p><p id="ga4-page-views" class="mt-2 text-3xl font-black">0</p></div>
-                        </div>
-                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                            <p class="mb-1 text-lg font-black text-primary">Daily Website Trend</p>
-                            <p class="mb-4 text-sm text-ink/60">Daily active users, new users, sessions, and page views.</p>
-                            <div class="h-80 w-full"><canvas id="ga4DailyTrendChart"></canvas></div>
-                        </div>
-                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
-                            <p class="mb-1 text-lg font-black text-primary">First Visit → Donation</p>
-                            <p class="mb-4 text-sm text-ink/60">Days from first recorded GA4 visit to the <code class="rounded bg-ink/5 px-1"><%= ga4.postEffect?.donationEvent || 'purchase' %></code> event. This counts donation events, not deduplicated people.</p>
-                            <div class="h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
-                        </div>
-                    <% } %>
-                </section>
-
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div
@@ -259,6 +229,36 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- GA4 Summary -->
+                <section class="mt-8" aria-labelledby="ga4-heading">
+                    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p id="ga4-heading" class="text-2xl font-black text-accent">GA4 Website Performance</p>
+                            <p class="text-sm text-ink/60">Uses the selected event date range.</p>
+                        </div>
+                    </div>
+                    <% if (!ga4.available) { %>
+                        <div class="rounded-lg border border-amber-600/30 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"><%= ga4.message %></div>
+                    <% } else { %>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Active Users</p><p id="ga4-active-users" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">New Users</p><p id="ga4-new-users" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Sessions</p><p id="ga4-sessions" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Page Views</p><p id="ga4-page-views" class="mt-2 text-3xl font-black">0</p></div>
+                        </div>
+                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                            <p class="mb-1 text-lg font-black text-accent">Daily Website Trend</p>
+                            <p class="mb-4 text-sm text-ink/60">Daily active users, new users, sessions, and page views.</p>
+                            <div class="h-80 w-full"><canvas id="ga4DailyTrendChart"></canvas></div>
+                        </div>
+                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                            <p class="mb-1 text-lg font-black text-accent">First Visit → Donation</p>
+                            <p class="mb-4 text-sm text-ink/60">Days from first recorded GA4 visit to the <code class="rounded bg-ink/5 px-1"><%= ga4.postEffect?.donationEvent || 'purchase' %></code> event. This counts donation events, not deduplicated people.</p>
+                            <div class="h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
+                        </div>
+                    <% } %>
+                </section>
             </div>
         </main>
     </div>
