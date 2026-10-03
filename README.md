@@ -39,7 +39,7 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 4. Set `GIVING_EMAIL_BANNER_PATH` if you want a `{{banner}}` image and `GIVING_REPORT_URL` if the CTA should point somewhere else.
 
 ## Prerequisites
-- **Node.js 18+ / npm 9+** – runtime for Express + BullMQ.
+- **Node.js 22+ / npm 9+** – runtime and package manager for Express, BullMQ, and the GA4 Data API SDK.
 - **Redis 6+** – required for the BullMQ queue (`REDIS_URL`).
 - **PostgreSQL 13+** – provides the `confgive` table (see `schema.sql`).
 - **TapPay credentials** – `PARTNER_KEY`, `MERCHANT_ID`, and the REST endpoint (`TAPPAY_API`) pointing to sandbox or production.
@@ -72,6 +72,9 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `GOOGLE_APP_PASSWORD` | App Password generated for that mailbox (requires 2FA). |
 | `GIVING_EMAIL_BANNER_PATH` | Optional – absolute/relative path or `https://` URL for the banner image the email service should inline. |
 | `GIVING_REPORT_URL` | Optional – CTA link used by the giving email. Defaults to `https://thehope.co/25report`. |
+| `GA4_PROPERTY_ID` | Numeric GA4 Property ID used by `/stats` (for this dashboard: `557071037`). |
+| `GA4_SERVICE_ACCOUNT_JSON` | Complete one-line JSON key for the service account that has Viewer access to that GA4 Property. Keep it only in the deployment secret store; never commit it. |
+| `GA4_DONATION_EVENT` | GA4 event sent after a successful donation, used for the first-visit-to-donation report. The existing frontend emits `purchase`; this is the default. |
 
 Example template:
 ```env

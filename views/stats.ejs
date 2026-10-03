@@ -124,6 +124,36 @@
                 </dialog>
                 <% if (eventError) { %><script>document.getElementById('event-settings-dialog').showModal();</script><% } %>
 
+                <!-- GA4 Summary -->
+                <section class="mb-8" aria-labelledby="ga4-heading">
+                    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p id="ga4-heading" class="text-2xl font-black text-primary">GA4 Website Performance</p>
+                            <p class="text-sm text-ink/60">Uses the selected event date range.</p>
+                        </div>
+                    </div>
+                    <% if (!ga4.available) { %>
+                        <div class="rounded-lg border border-amber-600/30 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"><%= ga4.message %></div>
+                    <% } else { %>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Active Users</p><p id="ga4-active-users" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">New Users</p><p id="ga4-new-users" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Sessions</p><p id="ga4-sessions" class="mt-2 text-3xl font-black">0</p></div>
+                            <div class="rounded-lg border border-ink/10 bg-[#f8f3ea] p-5 shadow-[0_12px_34px_rgba(0,0,7,0.06)]"><p class="text-sm font-bold text-ink/70">Page Views</p><p id="ga4-page-views" class="mt-2 text-3xl font-black">0</p></div>
+                        </div>
+                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                            <p class="mb-1 text-lg font-black text-primary">Daily Website Trend</p>
+                            <p class="mb-4 text-sm text-ink/60">Daily active users, new users, sessions, and page views.</p>
+                            <div class="h-80 w-full"><canvas id="ga4DailyTrendChart"></canvas></div>
+                        </div>
+                        <div class="mt-6 rounded-lg border border-ink/10 bg-[#f8f3ea] p-6 shadow-[0_12px_34px_rgba(0,0,7,0.06)]">
+                            <p class="mb-1 text-lg font-black text-primary">First Visit → Donation</p>
+                            <p class="mb-4 text-sm text-ink/60">Days from first recorded GA4 visit to the <code class="rounded bg-ink/5 px-1"><%= ga4.postEffect?.donationEvent || 'purchase' %></code> event. This counts donation events, not deduplicated people.</p>
+                            <div class="h-72 w-full"><canvas id="ga4PostEffectChart"></canvas></div>
+                        </div>
+                    <% } %>
+                </section>
+
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div
@@ -239,10 +269,14 @@
     <script id="selected-event" type="application/json">
         <%- JSON.stringify(selectedEvent) %>
     </script>
+    <script id="ga4-data" type="application/json">
+        <%- JSON.stringify(ga4) %>
+    </script>
     <script>
         // Inject data from server
         const rawData = JSON.parse(document.getElementById('server-data').textContent);
         const selectedEvent = JSON.parse(document.getElementById('selected-event').textContent);
+        const ga4 = JSON.parse(document.getElementById('ga4-data').textContent);
 
         const taipeiDateFormatter = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Taipei',
@@ -411,6 +445,65 @@
         Chart.defaults.borderColor = 'rgba(0, 0, 7, 0.14)';
         if (window.ChartDataLabels) {
             Chart.register(ChartDataLabels);
+        }
+
+        if (ga4.available && ga4.summary) {
+            document.getElementById('ga4-active-users').textContent = Number(ga4.summary.activeUsers || 0).toLocaleString();
+            document.getElementById('ga4-new-users').textContent = Number(ga4.summary.newUsers || 0).toLocaleString();
+            document.getElementById('ga4-sessions').textContent = Number(ga4.summary.sessions || 0).toLocaleString();
+            document.getElementById('ga4-page-views').textContent = Number(ga4.summary.pageViews || 0).toLocaleString();
+
+            const dailyChartEl = document.getElementById('ga4DailyTrendChart');
+            if (dailyChartEl) {
+                new Chart(dailyChartEl, {
+                    type: 'line',
+                    data: {
+                        labels: ga4.daily.map(row => row.date),
+                        datasets: [
+                            { label: 'Active Users', data: ga4.daily.map(row => row.activeUsers), borderColor: '#e63c23', tension: 0.35 },
+                            { label: 'New Users', data: ga4.daily.map(row => row.newUsers), borderColor: '#0689c6', tension: 0.35 },
+                            { label: 'Sessions', data: ga4.daily.map(row => row.sessions), borderColor: '#000007', tension: 0.35 },
+                            { label: 'Page Views', data: ga4.daily.map(row => row.pageViews), borderColor: '#8b5cf6', tension: 0.35 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { datalabels: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            const postEffectChartEl = document.getElementById('ga4PostEffectChart');
+            if (postEffectChartEl && ga4.postEffect) {
+                const bucketDefinitions = [
+                    { label: 'Same day', test: days => days === 0 },
+                    { label: '1 day', test: days => days === 1 },
+                    { label: '2–3 days', test: days => days >= 2 && days <= 3 },
+                    { label: '4–7 days', test: days => days >= 4 && days <= 7 },
+                    { label: '8–14 days', test: days => days >= 8 && days <= 14 },
+                    { label: '15–30 days', test: days => days >= 15 && days <= 30 },
+                    { label: '31+ days', test: days => days >= 31 }
+                ];
+                const bucketValues = bucketDefinitions.map(bucket => (ga4.postEffect.rows || [])
+                    .filter(row => bucket.test(row.daysToDonation))
+                    .reduce((total, row) => total + Number(row.donationEvents || 0), 0));
+                new Chart(postEffectChartEl, {
+                    type: 'bar',
+                    data: {
+                        labels: bucketDefinitions.map(bucket => bucket.label),
+                        datasets: [{ label: 'Donation Events', data: bucketValues, backgroundColor: '#0689c6', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
         }
 
         // Campus Charts

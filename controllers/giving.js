@@ -2,6 +2,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const givingModel = require("../models/giving");
 const statsEventModel = require("../models/statsEvent");
+const ga4AnalyticsService = require("../services/ga4AnalyticsService");
 const { sendGivingSuccessEmail } = require("../services/emailService");
 const { parseSiyuanCsv } = require("../utils/siyuanImport");
 
@@ -412,10 +413,30 @@ const givingController = {
       const selectedEvent =
         events.find((event) => String(event.id) === requestedEventId) || events[0] || null;
 
+      let ga4 = {
+        available: false,
+        message: "請先選擇一個活動日期區間以檢視 GA4 資料。",
+        summary: null,
+        daily: [],
+        postEffect: null,
+      };
+      if (selectedEvent) {
+        try {
+          ga4 = await ga4AnalyticsService.getReport({
+            startDate: String(selectedEvent.start_date).slice(0, 10),
+            endDate: String(selectedEvent.end_date).slice(0, 10),
+          });
+        } catch (error) {
+          console.error("Error fetching GA4 stats:", error.message);
+          ga4.message = "無法取得 GA4 資料，請確認 Property ID、Service Account 權限與憑證設定。";
+        }
+      }
+
       res.render("stats", {
         data,
         events,
         selectedEvent,
+        ga4,
         eventError: req.query.eventError || null,
       });
     } catch (error) {
