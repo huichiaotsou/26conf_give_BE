@@ -420,6 +420,7 @@ const givingController = {
         daily: [],
         postEffect: null,
         geography: [],
+        cities: [],
       };
       if (selectedEvent) {
         try {

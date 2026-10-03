@@ -274,6 +274,18 @@
                                 <p class="mt-5 rounded-md bg-ink/5 px-4 py-3 text-sm text-ink/70">No country-level GA4 data is available for this event date range.</p>
                             <% } else { %>
                                 <div id="ga4GeoChart" class="mt-5 h-[30rem] w-full" aria-label="Geographic visits and giving map"></div>
+                                <section id="ga4CityStats" class="mt-5 hidden border-t border-ink/10 pt-5" aria-live="polite">
+                                    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                        <p id="ga4CityStatsTitle" class="text-base font-black text-accent"></p>
+                                        <button id="ga4GeoBackButton" type="button" class="rounded-md border border-ink/20 px-3 py-2 text-sm font-bold text-ink hover:border-accent hover:text-accent">Back to world</button>
+                                    </div>
+                                    <div class="overflow-x-auto rounded-md border border-ink/10">
+                                        <table class="w-full text-left text-sm">
+                                            <thead class="bg-[#ede6da] text-xs uppercase text-ink/65"><tr><th class="px-4 py-3">City</th><th class="px-4 py-3 text-right">Visits</th><th class="px-4 py-3 text-right">Sessions</th><th class="px-4 py-3 text-right">Giving counts</th><th class="px-4 py-3 text-right">Giving sum</th></tr></thead>
+                                            <tbody id="ga4CityStatsRows" class="text-ink/80"></tbody>
+                                        </table>
+                                    </div>
+                                </section>
                             <% } %>
                         </div>
                     <% } %>
@@ -527,6 +539,8 @@
             const geoChartEl = document.getElementById('ga4GeoChart');
             if (geoChartEl && Array.isArray(ga4.geography) && ga4.geography.length && window.google?.charts) {
                 let selectedGeoMetric = 'activeUsers';
+                let selectedGeoCountry = null;
+                let geoChartsLoaded = false;
                 const geoMetricConfig = {
                     activeUsers: { label: 'Visits', value: row => Number(row.activeUsers || 0) },
                     givingCount: { label: 'Giving counts', value: row => Number(row.givingCount || 0) },
@@ -552,9 +566,18 @@
                         ].join('\n');
                         return [row.countryCode, value, tooltip];
                     }));
-                    new google.visualization.GeoChart(geoChartEl).draw(data, {
-                        region: 'world',
-                        resolution: 'countries',
+                    const chart = new google.visualization.GeoChart(geoChartEl);
+                    google.visualization.events.addListener(chart, 'regionClick', event => {
+                        const countryCode = String(event.region || '').toUpperCase();
+                        if (ga4.geography?.some(country => country.countryCode === countryCode)) {
+                            selectedGeoCountry = countryCode;
+                            drawGeoChart();
+                            renderCityStats();
+                        }
+                    });
+                    chart.draw(data, {
+                        region: selectedGeoCountry || 'world',
+                        resolution: selectedGeoCountry ? 'provinces' : 'countries',
                         displayMode: 'regions',
                         backgroundColor: '#f8f3ea',
                         datalessRegionColor: '#ede6da',
@@ -565,8 +588,52 @@
                     });
                 };
 
+                const cityStatsEl = document.getElementById('ga4CityStats');
+                const cityStatsTitleEl = document.getElementById('ga4CityStatsTitle');
+                const cityStatsRowsEl = document.getElementById('ga4CityStatsRows');
+                const renderCityStats = () => {
+                    const cities = (ga4.cities || [])
+                        .filter(city => city.countryCode === selectedGeoCountry)
+                        .sort((a, b) => b.givingSum - a.givingSum || b.activeUsers - a.activeUsers);
+                    const country = ga4.geography.find(item => item.countryCode === selectedGeoCountry);
+                    if (!country || !cityStatsEl || !cityStatsTitleEl || !cityStatsRowsEl) return;
+                    cityStatsTitleEl.textContent = `City stats · ${country.country}`;
+                    if (!cities.length) {
+                        const row = document.createElement('tr');
+                        const cell = document.createElement('td');
+                        cell.colSpan = 5;
+                        cell.className = 'px-4 py-4 text-center text-ink/60';
+                        cell.textContent = 'No city-level GA4 data is available for this country.';
+                        row.appendChild(cell);
+                        cityStatsRowsEl.replaceChildren(row);
+                        cityStatsEl.classList.remove('hidden');
+                        return;
+                    }
+                    cityStatsRowsEl.replaceChildren(...cities.map(city => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-t border-ink/10';
+                        [
+                            city.city,
+                            Number(city.activeUsers || 0).toLocaleString(),
+                            Number(city.sessions || 0).toLocaleString(),
+                            Number(city.givingCount || 0).toLocaleString(),
+                            formatCurrency(city.givingSum || 0)
+                        ].forEach((value, index) => {
+                            const cell = document.createElement('td');
+                            cell.className = `px-4 py-3${index ? ' text-right' : ''}`;
+                            cell.textContent = value;
+                            row.appendChild(cell);
+                        });
+                        return row;
+                    }));
+                    cityStatsEl.classList.remove('hidden');
+                };
+
                 google.charts.load('current', { packages: ['geochart'] });
-                google.charts.setOnLoadCallback(drawGeoChart);
+                google.charts.setOnLoadCallback(() => {
+                    geoChartsLoaded = true;
+                    drawGeoChart();
+                });
                 document.querySelectorAll('.geo-metric-button').forEach(button => {
                     button.addEventListener('click', () => {
                         selectedGeoMetric = button.dataset.geoMetric;
@@ -578,8 +645,13 @@
                             item.classList.toggle('border-ink/20', !isSelected);
                             item.classList.toggle('text-ink', !isSelected);
                         });
-                        drawGeoChart();
+                        if (geoChartsLoaded) drawGeoChart();
                     });
+                });
+                document.getElementById('ga4GeoBackButton')?.addEventListener('click', () => {
+                    selectedGeoCountry = null;
+                    cityStatsEl?.classList.add('hidden');
+                    if (geoChartsLoaded) drawGeoChart();
                 });
             }
         }

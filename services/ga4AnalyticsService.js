@@ -121,6 +121,54 @@ function parseGeography(visitsResponse, purchasesResponse) {
   );
 }
 
+function parseCityGeography(visitsResponse, purchasesResponse) {
+  const cities = new Map();
+  const getRow = (countryCode, country, city) => {
+    if (!/^[A-Z]{2}$/.test(countryCode) || !city || city === "(not set)") {
+      return null;
+    }
+    const key = `${countryCode}:${city}`;
+    const existing = cities.get(key) || {
+      countryCode,
+      country: country || countryCode,
+      city,
+      activeUsers: 0,
+      sessions: 0,
+      givingCount: 0,
+      givingSum: 0,
+    };
+    if (country) existing.country = country;
+    cities.set(key, existing);
+    return existing;
+  };
+
+  for (const row of visitsResponse.rows || []) {
+    const entry = getRow(
+      String(row.dimensionValues?.[0]?.value || "").toUpperCase(),
+      row.dimensionValues?.[1]?.value,
+      row.dimensionValues?.[2]?.value
+    );
+    if (!entry) continue;
+    entry.activeUsers = Number(valueAt(row, 0));
+    entry.sessions = Number(valueAt(row, 1));
+  }
+
+  for (const row of purchasesResponse.rows || []) {
+    const entry = getRow(
+      String(row.dimensionValues?.[0]?.value || "").toUpperCase(),
+      row.dimensionValues?.[1]?.value,
+      row.dimensionValues?.[2]?.value
+    );
+    if (!entry) continue;
+    entry.givingCount = Number(valueAt(row, 0));
+    entry.givingSum = Number(valueAt(row, 1));
+  }
+
+  return Array.from(cities.values()).sort(
+    (a, b) => b.givingSum - a.givingSum || b.activeUsers - a.activeUsers
+  );
+}
+
 async function getReport({ startDate, endDate }) {
   const configuration = getConfiguration();
   if (!configuration) {
@@ -131,6 +179,7 @@ async function getReport({ startDate, endDate }) {
       daily: [],
       postEffect: null,
       geography: [],
+      cities: [],
     };
   }
 
@@ -154,7 +203,7 @@ async function getReport({ startDate, endDate }) {
     ],
   };
 
-  const [summaryResponse, dailyResponse, postEffectResponse, visitsByCountryResponse, purchasesByCountryResponse] = await Promise.all([
+  const [summaryResponse, dailyResponse, postEffectResponse, visitsByCountryResponse, purchasesByCountryResponse, visitsByCityResponse, purchasesByCityResponse] = await Promise.all([
     client.runReport(requestBase),
     client.runReport({
       ...requestBase,
@@ -202,6 +251,31 @@ async function getReport({ startDate, endDate }) {
       orderBys: [{ metric: { metricName: "eventValue" }, desc: true }],
       limit: 250,
     }),
+    client.runReport({
+      property: requestBase.property,
+      dateRanges: requestBase.dateRanges,
+      dimensions: [{ name: "countryId" }, { name: "country" }, { name: "city" }],
+      metrics: [{ name: "activeUsers" }, { name: "sessions" }],
+      orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+      limit: 1000,
+    }),
+    client.runReport({
+      property: requestBase.property,
+      dateRanges: requestBase.dateRanges,
+      dimensions: [{ name: "countryId" }, { name: "country" }, { name: "city" }],
+      metrics: [{ name: "eventCount" }, { name: "eventValue" }],
+      dimensionFilter: {
+        filter: {
+          fieldName: "eventName",
+          stringFilter: {
+            matchType: "EXACT",
+            value: configuration.donationEvent,
+          },
+        },
+      },
+      orderBys: [{ metric: { metricName: "eventValue" }, desc: true }],
+      limit: 1000,
+    }),
   ]);
 
   const value = {
@@ -211,6 +285,7 @@ async function getReport({ startDate, endDate }) {
     daily: parseDaily(dailyResponse[0]),
     postEffect: parsePostEffect(postEffectResponse[0], configuration.donationEvent),
     geography: parseGeography(visitsByCountryResponse[0], purchasesByCountryResponse[0]),
+    cities: parseCityGeography(visitsByCityResponse[0], purchasesByCityResponse[0]),
   };
   reportCache.set(cacheKey, { createdAt: Date.now(), value });
   return value;
