@@ -86,6 +86,18 @@ function generateDetails(phoneNumber, cardholder) {
   return `${phoneNumber},${id},${note}`;
 }
 
+function isValidIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 async function tapPayPayment(phoneNumber, prime, amount, cardholder) {
   try {
     const response = await axios.post(
@@ -187,6 +199,68 @@ function statsPath(req) {
 
 function rowsPath(req) {
   return `${req.app.locals.publicPathPrefix || ""}/rows`;
+}
+
+function parseRowsDateFilters(query) {
+  const startDate = typeof query.startDate === "string" ? query.startDate : "";
+  const endDate = typeof query.endDate === "string" ? query.endDate : "";
+
+  if ((startDate && !isValidIsoDate(startDate)) || (endDate && !isValidIsoDate(endDate))) {
+    return { error: "日期格式必須是有效的 YYYY-MM-DD。" };
+  }
+  if (startDate && endDate && startDate > endDate) {
+    return { error: "起始日期不可晚於結束日期。" };
+  }
+
+  return { startDate: startDate || null, endDate: endDate || null };
+}
+
+function rowsQuery({ page, startDate, endDate } = {}) {
+  const query = new URLSearchParams();
+  if (page && page > 1) query.set("page", String(page));
+  if (startDate) query.set("startDate", startDate);
+  if (endDate) query.set("endDate", endDate);
+  const value = query.toString();
+  return value ? `?${value}` : "";
+}
+
+function escapeCsvValue(value) {
+  const text = value === null || value === undefined ? "" : String(value);
+  // Prevent spreadsheet applications from treating supplied values as formulas.
+  const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safeText.replace(/"/g, '""')}"`;
+}
+
+function formatRowsCsv(rows) {
+  const formatDate = (value) => value
+    ? new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Taipei",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(new Date(value))
+    : "";
+  const columns = [
+    ["ID", (row) => row.id],
+    ["日期", (row) => formatDate(row.date)],
+    ["姓名", (row) => row.name],
+    ["金額", (row) => row.amount],
+    ["幣別", (row) => row.currency],
+    ["分部", (row) => row.campus],
+    ["付款方式", (row) => row.paymenttype],
+    ["Email", (row) => row.email],
+    ["電話", (row) => row.phone_number],
+    ["交易 ID", (row) => row.tp_trade_id],
+  ];
+
+  return "\uFEFF" + [
+    columns.map(([header]) => escapeCsvValue(header)).join(","),
+    ...rows.map((row) => columns.map(([, getValue]) => escapeCsvValue(getValue(row))).join(",")),
+  ].join("\r\n");
 }
 
 function requireAdminAuth(req, res, respondWithJson = false) {
@@ -381,7 +455,7 @@ const givingController = {
     }
   },
   get: async (req, res, next) => {
-    const { googleSecret, lastRowID } = req.body;
+    const { googleSecret, lastRowID, startDate } = req.body;
     if (!googleSecret) {
       return res.status(400).json({
         error: "Missing secret",
@@ -394,8 +468,21 @@ const givingController = {
       });
     }
 
+    let normalizedStartDate = null;
+    if (startDate !== undefined && startDate !== null && startDate !== "") {
+      if (
+        typeof startDate !== "string" ||
+        !isValidIsoDate(startDate)
+      ) {
+        return res.status(400).json({
+          error: "startDate must be a valid YYYY-MM-DD date.",
+        });
+      }
+      normalizedStartDate = startDate;
+    }
+
     try {
-      const result = await givingModel.get(lastRowID);
+      const result = await givingModel.get(lastRowID || 0, normalizedStartDate);
       res.send({ data: result });
     } catch (e) {
       return res.status(500).json({ error: "Failed to get giving all data." });
@@ -514,6 +601,9 @@ const givingController = {
   rowsPage: async (req, res) => {
     if (!requireAdminAuth(req, res)) return;
 
+    const filters = parseRowsDateFilters(req.query);
+    if (filters.error) return res.status(400).send(filters.error);
+
     const requestedPage = Number.parseInt(req.query.page, 10);
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
       ? requestedPage
@@ -523,7 +613,8 @@ const givingController = {
     try {
       let { rows, total } = await givingModel.getPage(
         pageSize,
-        (page - 1) * pageSize
+        (page - 1) * pageSize,
+        filters
       );
       const totalPages = Math.max(1, Math.ceil(total / pageSize));
       const currentPage = Math.min(page, totalPages);
@@ -531,7 +622,8 @@ const givingController = {
       if (currentPage !== page) {
         ({ rows, total } = await givingModel.getPage(
           pageSize,
-          (currentPage - 1) * pageSize
+          (currentPage - 1) * pageSize,
+          filters
         ));
       }
 
@@ -541,10 +633,27 @@ const givingController = {
         pageSize,
         total,
         totalPages,
+        filters,
       });
     } catch (error) {
       console.error("Error fetching giving rows:", error);
       res.status(500).send("Error fetching giving rows");
+    }
+  },
+  exportRowsCsv: async (req, res) => {
+    if (!requireAdminAuth(req, res)) return;
+
+    const filters = parseRowsDateFilters(req.query);
+    if (filters.error) return res.status(400).send(filters.error);
+
+    try {
+      const rows = await givingModel.getFilteredRows(filters);
+      res.attachment("giving-records.csv");
+      res.set("Content-Type", "text/csv; charset=utf-8");
+      return res.send(formatRowsCsv(rows));
+    } catch (error) {
+      console.error("Error exporting giving rows:", error);
+      return res.status(500).send("Error exporting giving rows");
     }
   },
   rowsLogin: (req, res) => {
@@ -592,7 +701,12 @@ const givingController = {
       if (!deleted) return res.status(404).send("Giving record not found");
 
       const page = Number.parseInt(req.body.page, 10);
-      const pageQuery = Number.isSafeInteger(page) && page > 1 ? `?page=${page}` : "";
+      const filters = parseRowsDateFilters(req.body);
+      const pageQuery = rowsQuery({
+        page: Number.isSafeInteger(page) ? page : 1,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
       res.redirect(`${rowsPath(req)}${pageQuery}`);
     } catch (error) {
       console.error("Error deleting giving row:", error);

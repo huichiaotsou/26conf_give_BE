@@ -15,10 +15,21 @@
         <h1 class="mt-1 text-3xl font-black">歷史奉獻紀錄</h1>
         <p class="mt-2 text-sm text-stone-600">共 <%= total %> 筆；每頁 <%= pageSize %> 筆。僅列出正式環境的成功奉獻。</p>
       </div>
-      <form action="<%= publicPathPrefix %>/rows/logout" method="post">
-        <button class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-bold hover:bg-stone-50" type="submit">登出管理員</button>
-      </form>
+      <a class="rounded-md bg-orange-700 px-4 py-2 text-sm font-bold text-white hover:bg-orange-800" href="<%= publicPathPrefix %>/rows/export.csv?<%= new URLSearchParams({ ...(filters.startDate ? { startDate: filters.startDate } : {}), ...(filters.endDate ? { endDate: filters.endDate } : {}) }).toString() %>">匯出 CSV</a>
     </header>
+
+    <form class="mt-6 flex flex-wrap items-end gap-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm" method="get" action="<%= publicPathPrefix %>/rows">
+      <label class="block text-sm font-semibold text-stone-700">起始日期
+        <input class="mt-1 block rounded-md border-stone-300" type="date" name="startDate" value="<%= filters.startDate || '' %>" />
+      </label>
+      <label class="block text-sm font-semibold text-stone-700">結束日期
+        <input class="mt-1 block rounded-md border-stone-300" type="date" name="endDate" value="<%= filters.endDate || '' %>" />
+      </label>
+      <button class="rounded-md bg-stone-800 px-4 py-2 text-sm font-bold text-white hover:bg-stone-700" type="submit">篩選</button>
+      <% if (filters.startDate || filters.endDate) { %>
+        <a class="pb-2 text-sm font-semibold text-stone-600 underline hover:text-stone-900" href="<%= publicPathPrefix %>/rows">清除篩選</a>
+      <% } %>
+    </form>
 
     <section class="mt-6 overflow-x-auto rounded-lg border border-stone-200 bg-white shadow-sm">
       <table class="min-w-full text-left text-sm">
@@ -47,6 +58,8 @@
               <td class="px-3 py-3">
                 <form action="<%= publicPathPrefix %>/rows/<%= row.id %>/delete" method="post" onsubmit="return confirm('確定要永久刪除 ID <%= row.id %> 的奉獻紀錄嗎？此操作無法復原。');">
                   <input type="hidden" name="page" value="<%= page %>" />
+                  <input type="hidden" name="startDate" value="<%= filters.startDate || '' %>" />
+                  <input type="hidden" name="endDate" value="<%= filters.endDate || '' %>" />
                   <button class="rounded bg-red-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-800" type="submit">刪除</button>
                 </form>
               </td>
@@ -58,11 +71,11 @@
 
     <nav class="mt-6 flex items-center justify-between gap-4" aria-label="Pagination">
       <% if (page > 1) { %>
-        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?page=<%= page - 1 %>">上一頁</a>
+        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?<%= new URLSearchParams({ page: page - 1, ...(filters.startDate ? { startDate: filters.startDate } : {}), ...(filters.endDate ? { endDate: filters.endDate } : {}) }).toString() %>">上一頁</a>
       <% } else { %><span></span><% } %>
       <span class="text-sm font-medium text-stone-700">第 <%= page %> / <%= totalPages %> 頁</span>
       <% if (page < totalPages) { %>
-        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?page=<%= page + 1 %>">下一頁</a>
+        <a class="rounded-md border border-stone-300 bg-white px-4 py-2 font-semibold hover:bg-stone-50" href="<%= publicPathPrefix %>/rows?<%= new URLSearchParams({ page: page + 1, ...(filters.startDate ? { startDate: filters.startDate } : {}), ...(filters.endDate ? { endDate: filters.endDate } : {}) }).toString() %>">下一頁</a>
       <% } else { %><span></span><% } %>
     </nav>
   </main>

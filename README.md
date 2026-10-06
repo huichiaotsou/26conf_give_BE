@@ -190,8 +190,8 @@ npm install
   - Body: `{ prime, amount, cardholder }`, where `cardholder` includes `phoneCode`, `phone_number`, `name`, `email`, optional receipt metadata, and the new `campus` key that identifies which campus initiated the Giving.
   - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. The email service also triggers here (best-effort) to send an HTML receipt via Gmail. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
 - `POST /getall`
-  - Body: `{ googleSecret, lastRowID }`.
-  - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
+  - Body: `{ googleSecret, lastRowID, startDate? }`, where `startDate` is an optional `YYYY-MM-DD` date.
+  - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount >= 1`. Pass `0` to fetch everything that matches those conditions. When supplied, `startDate` additionally limits results to records on or after midnight Taipei time on that date.
 - `POST /upload-siyuan`
   - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
   - Auth: Requires the same logged-in stats session as `/stats`.

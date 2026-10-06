@@ -140,11 +140,24 @@ const givingModel = {
       client.release();
     }
   },
-  get: async (lastRowID) => {
+  get: async (lastRowID, startDate = null) => {
     try {
+      const params = [lastRowID];
+      let startDateClause = "";
+
+      if (startDate) {
+        params.push(startDate);
+        // Treat a requested calendar date as midnight in the church's timezone,
+        // rather than midnight UTC.
+        startDateClause =
+          " AND date >= ($2::date AT TIME ZONE 'Asia/Taipei')";
+      }
+
       const res = await pool.query(
-        "SELECT * FROM confgive WHERE id > $1 AND env = 'production' AND amount >= 1 ORDER BY id",
-        [lastRowID]
+        `SELECT * FROM confgive
+         WHERE id > $1 AND env = 'production' AND amount >= 1${startDateClause}
+         ORDER BY id`,
+        params
       );
       return res.rows;
     } catch (e) {
@@ -163,18 +176,32 @@ const givingModel = {
       throw e;
     }
   },
-  getPage: async (limit, offset) => {
+  getPage: async (limit, offset, { startDate = null, endDate = null } = {}) => {
     try {
+      const params = [];
+      const filters = ["env = 'production'", "is_success = true"];
+
+      if (startDate) {
+        params.push(startDate);
+        filters.push(`date >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+      }
+      if (endDate) {
+        params.push(endDate);
+        filters.push(`date < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+      }
+
+      const whereClause = `WHERE ${filters.join(" AND ")}`;
       const [countResult, result] = await Promise.all([
         pool.query(
-          "SELECT COUNT(*) AS total FROM confgive WHERE env = 'production' AND is_success = true"
+          `SELECT COUNT(*) AS total FROM confgive ${whereClause}`,
+          params
         ),
         pool.query(
           `SELECT * FROM confgive
-           WHERE env = 'production' AND is_success = true
+           ${whereClause}
            ORDER BY id DESC
-           LIMIT $1 OFFSET $2`,
-          [limit, offset]
+           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+          [...params, limit, offset]
         ),
       ]);
 
@@ -184,6 +211,32 @@ const givingModel = {
       };
     } catch (error) {
       console.error("Error executing query in givingModel.getPage:", error);
+      throw error;
+    }
+  },
+  getFilteredRows: async ({ startDate = null, endDate = null } = {}) => {
+    try {
+      const params = [];
+      const filters = ["env = 'production'", "is_success = true"];
+
+      if (startDate) {
+        params.push(startDate);
+        filters.push(`date >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+      }
+      if (endDate) {
+        params.push(endDate);
+        filters.push(`date < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+      }
+
+      const result = await pool.query(
+        `SELECT * FROM confgive
+         WHERE ${filters.join(" AND ")}
+         ORDER BY id DESC`,
+        params
+      );
+      return result.rows;
+    } catch (error) {
+      console.error("Error executing query in givingModel.getFilteredRows:", error);
       throw error;
     }
   },
