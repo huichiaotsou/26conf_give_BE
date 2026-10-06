@@ -183,11 +183,11 @@ const givingModel = {
 
       if (startDate) {
         params.push(startDate);
-        filters.push(`date >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
       }
       if (endDate) {
         params.push(endDate);
-        filters.push(`date < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
       }
 
       const whereClause = `WHERE ${filters.join(" AND ")}`;
@@ -199,7 +199,7 @@ const givingModel = {
         pool.query(
           `SELECT * FROM confgive
            ${whereClause}
-           ORDER BY id DESC
+           ORDER BY created_at ASC, id ASC
            LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
           [...params, limit, offset]
         ),
@@ -221,17 +221,17 @@ const givingModel = {
 
       if (startDate) {
         params.push(startDate);
-        filters.push(`date >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
       }
       if (endDate) {
         params.push(endDate);
-        filters.push(`date < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
       }
 
       const result = await pool.query(
         `SELECT * FROM confgive
          WHERE ${filters.join(" AND ")}
-         ORDER BY id DESC`,
+         ORDER BY created_at ASC, id ASC`,
         params
       );
       return result.rows;

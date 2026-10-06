@@ -35,7 +35,7 @@
       <table class="min-w-full text-left text-sm">
         <thead class="bg-stone-800 text-xs uppercase tracking-wide text-white">
           <tr>
-            <th class="px-3 py-3">ID</th><th class="px-3 py-3">日期</th><th class="px-3 py-3">姓名</th>
+            <th class="px-3 py-3">ID</th><th class="px-3 py-3">建立時間</th><th class="px-3 py-3">姓名</th>
             <th class="px-3 py-3">金額</th><th class="px-3 py-3">分部</th><th class="px-3 py-3">付款方式</th>
             <th class="px-3 py-3">Email</th><th class="px-3 py-3">電話</th><th class="px-3 py-3">交易 ID</th><th class="px-3 py-3">操作</th>
           </tr>
@@ -47,7 +47,7 @@
           <% rows.forEach((row) => { %>
             <tr class="align-top hover:bg-stone-50">
               <td class="whitespace-nowrap px-3 py-3 font-mono text-xs"><%= row.id %></td>
-              <td class="whitespace-nowrap px-3 py-3"><%= formatDate(row.date) %></td>
+              <td class="whitespace-nowrap px-3 py-3"><%= formatDate(row.created_at) %></td>
               <td class="px-3 py-3 font-medium"><%= row.name %></td>
               <td class="whitespace-nowrap px-3 py-3 font-bold"><%= row.currency %> <%= Number(row.amount).toLocaleString('zh-TW') %></td>
               <td class="px-3 py-3"><%= row.campus || '—' %></td>
