@@ -245,16 +245,28 @@ function formatRowsCsv(rows) {
     }).format(new Date(value))
     : "";
   const columns = [
-    ["ID", (row) => row.id],
-    ["日期", (row) => formatDate(row.date)],
-    ["姓名", (row) => row.name],
-    ["金額", (row) => row.amount],
-    ["幣別", (row) => row.currency],
-    ["分部", (row) => row.campus],
-    ["付款方式", (row) => row.paymenttype],
-    ["Email", (row) => row.email],
-    ["電話", (row) => row.phone_number],
-    ["交易 ID", (row) => row.tp_trade_id],
+    ["id", (row) => row.id],
+    ["name", (row) => row.name],
+    ["amount", (row) => row.amount],
+    ["currency", (row) => row.currency],
+    ["date", (row) => formatDate(row.date)],
+    ["phone_number", (row) => row.phone_number],
+    ["email", (row) => row.email],
+    ["receipt", (row) => row.receipt],
+    ["paymenttype", (row) => row.paymenttype],
+    ["upload", (row) => row.upload],
+    ["receiptname", (row) => row.receiptname],
+    ["nationalid", (row) => row.nationalid],
+    ["company", (row) => row.company],
+    ["taxid", (row) => row.taxid],
+    ["note", (row) => row.note],
+    ["campus", (row) => row.campus],
+    ["tp_trade_id", (row) => row.tp_trade_id],
+    ["is_success", (row) => row.is_success],
+    ["env", (row) => row.env],
+    ["imported", (row) => row.imported],
+    ["siyuan_id", (row) => row.siyuan_id],
+    ["created_at", (row) => formatDate(row.created_at)],
   ];
 
   return "\uFEFF" + [
