@@ -183,11 +183,11 @@ const givingModel = {
 
       if (startDate) {
         params.push(startDate);
-        filters.push(`created_at >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Taipei')`);
       }
       if (endDate) {
         params.push(endDate);
-        filters.push(`created_at < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Taipei')`);
       }
 
       const whereClause = `WHERE ${filters.join(" AND ")}`;
@@ -221,11 +221,11 @@ const givingModel = {
 
       if (startDate) {
         params.push(startDate);
-        filters.push(`created_at >= ($${params.length}::date AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Taipei')`);
       }
       if (endDate) {
         params.push(endDate);
-        filters.push(`created_at < (($${params.length}::date + 1) AT TIME ZONE 'Asia/Taipei')`);
+        filters.push(`created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Taipei')`);
       }
 
       const result = await pool.query(
